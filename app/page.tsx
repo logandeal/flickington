@@ -33,6 +33,7 @@ export default async function Home() {
   const latestMovieId = (await getLatestMovie()).id;
 
   const movieId = getRandomInt(latestMovieId) + 1;
+  console.log(movieId);
 
   const movie = await getMovieById(movieId);
 
