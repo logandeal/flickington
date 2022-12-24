@@ -106,6 +106,8 @@ export default async function Home() {
         {movie.poster_path && (
           <img
             src={`https://www.themoviedb.org/t/p/w188_and_h282_bestv2${movie.poster_path}`}
+            height="282"
+            width="182"
           />
         )}
         <h2>{movie.title}</h2>
