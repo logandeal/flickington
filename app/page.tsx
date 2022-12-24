@@ -21,7 +21,10 @@ async function getLatestMovie() {
 
 async function getMovieById(id: number) {
   const response = await fetch(
-    `https://api.themoviedb.org/3/movie/${id}?api_key=${process.env.TMDB_API_KEY}&language=en-US`
+    `https://api.themoviedb.org/3/movie/${id}?api_key=${process.env.TMDB_API_KEY}&language=en-US`,
+    {
+      cache: "no-store",
+    }
   );
 
   const data = await response.json();
