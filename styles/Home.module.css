@@ -7,6 +7,19 @@
   min-height: 100vh;
 }
 
+.header img {
+  float: left;
+  width: 25px;
+  height: 25px;
+  background: #555;
+}
+
+.header h1 {
+  position: relative;
+  top: 18px;
+  left: 10px;
+}
+
 .description {
   display: inherit;
   justify-content: inherit;
@@ -97,7 +110,7 @@
 
 .center::before,
 .center::after {
-  content: '';
+  content: "";
   left: 50%;
   position: absolute;
   filter: blur(45px);
@@ -125,7 +138,7 @@
 
 .thirteen::before,
 .thirteen::after {
-  content: '';
+  content: "";
   position: absolute;
   z-index: -1;
 }

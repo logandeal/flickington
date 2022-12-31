@@ -99,16 +99,20 @@ export default async function Home() {
       <Head>
         <title>Flickington</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/favicon.png" />
       </Head>
       <main>
         <h1>Flickington</h1>
         {movie.poster_path && (
-          <img
-            src={`https://www.themoviedb.org/t/p/w188_and_h282_bestv2${movie.poster_path}`}
-            height="282"
-            width="182"
-          />
+          <>
+            <img
+              src={`https://www.themoviedb.org/t/p/w188_and_h282_bestv2${movie.poster_path}`}
+              height="282"
+              width="182"
+            />
+            <br />
+            <img src="/movie-reveal.png" height="75.985" width="182" />
+          </>
         )}
         <h2>{movie.title}</h2>
         {movie.release_date && (
