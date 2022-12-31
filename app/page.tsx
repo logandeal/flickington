@@ -80,7 +80,7 @@ async function getRandomMovie(
     return movie;
   } catch (e) {
     if (e instanceof MovieNotFoundError) {
-      if (attemptCount === MAX_ATTEMPT_COUNT) {
+      if (attemptCount >= MAX_ATTEMPT_COUNT) {
         throw new Error("Too many attempts to find random movie.");
       }
       return getRandomMovie(maxId, attemptCount + 1);
