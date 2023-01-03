@@ -1,5 +1,5 @@
 "use client";
-import { css } from "@emotion/react";
+import { CacheProvider, css } from "@emotion/react";
 import Head from "next/head";
 import Image from "next/image";
 import { Inter } from "@next/font/google";
@@ -37,7 +37,33 @@ export default function App() {
 }
 
 function Home() {
-  const [movieNumber, setMovieNumber] = useState(0);
+  const [currentMovieState, setCurrentMovieState] = useState<{
+    status: string;
+    movie: Movie | null;
+    error: Error | null;
+  }>({
+    status: "initial",
+    movie: null,
+    error: null,
+  });
+
+  async function loadRandomMovie() {
+    setCurrentMovieState((state) => ({ ...state, status: "loading" }));
+    try {
+      const res = await fetch("/api/movie");
+      setCurrentMovieState({
+        status: "loaded",
+        movie: await res.json(),
+        error: null,
+      });
+    } catch (e) {
+      setCurrentMovieState({
+        status: "error",
+        movie: null,
+        error: e as Error,
+      });
+    }
+  }
 
   return (
     <>
@@ -57,15 +83,16 @@ function Home() {
       </AppBar>
       <main
         css={css`
-          height: calc(100vh - 68px - 16px);
+          // height: calc(100vh - 68px - 16px);
         `}
       >
         <div
           css={css`
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            flex-direction: column;
+            margin-top: 10px;
+            // height: 100%;
+            // display: flex;
+            // justify-content: center;
+            // flex-direction: column;
           `}
         >
           <Card sx={{ margin: "auto", maxWidth: 600 }}>
@@ -84,23 +111,30 @@ function Home() {
                   margin-top: 10px;
                 `}
               >
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    setMovieNumber(
-                      (currentMovieNumber) => currentMovieNumber + 1
-                    );
-                  }}
-                >
-                  Reveal Movie
-                </Button>
+                {currentMovieState.status === "loading" ? (
+                  <LoadingButton loading variant="contained">
+                    Reveal Movie
+                  </LoadingButton>
+                ) : (
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      loadRandomMovie();
+                    }}
+                  >
+                    Reveal Movie
+                  </Button>
+                )}
               </div>
               <div
                 css={css`
                   margin-top: 10px;
                 `}
               >
-                {movieNumber ? <MovieContent key={movieNumber} /> : null}
+                <MovieContentOrError
+                  movie={currentMovieState.movie}
+                  error={currentMovieState.error}
+                />
               </div>
             </CardContent>
           </Card>
@@ -140,36 +174,29 @@ function Home() {
   );
 }
 
-export function MovieContent() {
-  const { isLoading, error, data } = useQuery<Movie, Error>("randomMovie", () =>
-    fetch("/api/movie").then((res) => res.json())
-  );
+export function MovieContentOrError({
+  movie,
+  error,
+}: {
+  movie: Movie | null;
+  error: Error | null;
+}) {
+  if (error) {
+    return <>Error loading movie: {error.message}</>;
+  }
+  if (!movie) {
+    return null;
+  }
+  return <MovieContent key={movie.id} movie={movie} />;
+}
 
-  if (isLoading)
-    return (
-      <LoadingButton loading variant="contained">
-        Reveal Movie
-      </LoadingButton>
-    );
-
-  if (error) return <>An error has occurred: {error.message}</>;
-
-  if (!data) return <>WTF no movie?</>;
-
-  const movie = data;
-
+export function MovieContent({ movie }: { movie: Movie }) {
   return (
     <>
-      {movie.poster_path ? (
+      {movie.poster_path && (
         <>
-          <img
-            src={`https://www.themoviedb.org/t/p/w188_and_h282_bestv2${movie.poster_path}`}
-            height="282"
-            width="182"
-          />
+          <img src={movie.poster_path} height="282" width="182" />
         </>
-      ) : (
-        <Skeleton variant="rectangular" width={282} height={182} />
       )}
       <h2>{movie.title}</h2>
       {movie.release_date && (
@@ -179,6 +206,16 @@ export function MovieContent() {
         <p>Genres: {movie.genres.map((genre) => genre.name).join(", ")}</p>
       )}
       <p>{movie.overview}</p>
+      {movie.providers && movie.providers.length > 0 && (
+        <ul>
+          {movie.providers.map((provider) => (
+            <li>
+              {provider.provider_name} ({provider.type}):{" "}
+              <img src={provider.logo_path} />
+            </li>
+          ))}
+        </ul>
+      )}
     </>
   );
 }
