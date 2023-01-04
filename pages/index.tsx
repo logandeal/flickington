@@ -209,7 +209,7 @@ export function MovieContent({ movie }: { movie: Movie }) {
       {movie.providers && movie.providers.length > 0 && (
         <ul>
           {movie.providers.map((provider) => (
-            <li>
+            <li key={provider.provider_id}>
               {provider.provider_name} ({provider.type}):{" "}
               <img src={provider.logo_path} />
             </li>
