@@ -191,12 +191,30 @@ export function MovieContentOrError({
 }
 
 export function MovieContent({ movie }: { movie: Movie }) {
+  const [moviePosterLoading, setMoviePosterLoading] = useState(
+    movie.poster_path ? 1 : 0
+  );
+
   return (
     <>
+      {moviePosterLoading ? (
+        <Skeleton variant="rectangular" width={182} height={264.5} />
+      ) : null}
       {movie.poster_path && (
-        <>
-          <img src={movie.poster_path} height="282" width="182" />
-        </>
+        <img
+          id="posterImage"
+          src={movie.poster_path}
+          height="0"
+          width="0"
+          onLoad={() => {
+            setMoviePosterLoading(0);
+            var thisImg = document.getElementById("posterImage");
+            if (thisImg != null) {
+              thisImg.setAttribute("width", "182");
+              thisImg.setAttribute("height", "282");
+            }
+          }}
+        />
       )}
       <h2>{movie.title}</h2>
       {movie.release_date && (
@@ -211,7 +229,7 @@ export function MovieContent({ movie }: { movie: Movie }) {
           {movie.providers.map((provider) => (
             <li key={provider.provider_id}>
               {provider.provider_name} ({provider.type}):{" "}
-              <img src={provider.logo_path} />
+              <img src={provider.logo_path} height="30" width="30" />
             </li>
           ))}
         </ul>
