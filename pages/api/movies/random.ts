@@ -29,7 +29,7 @@ async function getRandomMovie(
     }
 
     movie.release_date = movie.release_date
-      ? movie.release_date.replace("-", "/")
+      ? movie.release_date.replace(/-/g, "/")
       : "";
 
     return movie;
@@ -51,19 +51,34 @@ function arrayify<T>(maybeArray: T | T[]): T[] {
   return [maybeArray];
 }
 
+function getCommaSeparatedParameterValues(
+  parameters: undefined | null | string | string[]
+): string[] {
+  if (!parameters) {
+    return [];
+  }
+  return arrayify(parameters)
+    .map((parameter) => parameter.split(","))
+    .flat()
+    .filter(Boolean);
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Movie | MovieError>
 ) {
-  const providersParams = arrayify(req.query.providers || "");
-  const providerIds = providersParams
-    .map((providersString) => providersString.split(","))
-    .flat()
-    .filter(Boolean)
-    .map(Number);
+  const providerIds = getCommaSeparatedParameterValues(req.query.providers).map(
+    Number
+  );
+  const genreIds = getCommaSeparatedParameterValues(req.query.genres).map(
+    Number
+  );
+  const languageCodes = getCommaSeparatedParameterValues(req.query.languages);
   try {
     const movie = await getRandomMovie({
       providerIds,
+      genreIds,
+      languageCodes,
     });
     res.status(200).json(movie);
   } catch (e) {

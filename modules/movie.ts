@@ -40,7 +40,8 @@ export interface MovieStub {
 export interface Movie extends MovieStub {
   title: string;
   overview: string;
-  genres?: MovieGenre[];
+  genres: MovieGenre[];
+  original_language?: string;
   poster_path?: string;
   release_date?: string;
   tagline?: string;
@@ -74,8 +75,9 @@ export async function getMovieById(id: number): Promise<Movie> {
   const data = await response.json();
 
   return {
-    ...data,
     providers: [],
+    genres: [],
+    ...data,
     poster_path:
       data.poster_path &&
       `https://image.tmdb.org/t/p/w188_and_h282_bestv2${data.poster_path}`,
@@ -140,33 +142,56 @@ export async function getLatestMovie(): Promise<Movie> {
 
 export interface MovieQueryOptions {
   providerIds?: number[];
+  genreIds?: number[];
+  languageCodes?: string[];
 }
 
 async function getRandomMovieSnapshot(
   randomNumber: number,
   op: WhereFilterOp,
-  { providerIds = [] }: MovieQueryOptions = {}
+  {
+    providerIds = [],
+    genreIds = [],
+    languageCodes = [],
+  }: MovieQueryOptions = {}
 ) {
   const moviesRef = collection(getFirestoreDb(), "movies");
   let q = query(moviesRef, where("random", op, randomNumber));
   if (providerIds.length > 0) {
     q = query(q, where("providers", "array-contains-any", providerIds));
   }
+  if (genreIds.length > 0) {
+    q = query(q, where("genres", "array-contains-any", genreIds));
+  }
+  if (languageCodes.length > 0) {
+    q = query(
+      q,
+      where(
+        "language",
+        "in",
+        languageCodes.map((code) => code.toLowerCase())
+      )
+    );
+  }
   q = query(q, limit(1));
   return await getDocs(q);
 }
 
-export async function getRandomMovieId({
-  providerIds = [],
-}: MovieQueryOptions = {}): Promise<number> {
+export async function getRandomMovieId(
+  movieQueryOptions: MovieQueryOptions = {}
+): Promise<number> {
   const randomNumber = Math.random();
-  let randomMovieSnapshot = await getRandomMovieSnapshot(randomNumber, ">=", {
-    providerIds,
-  });
+  let randomMovieSnapshot = await getRandomMovieSnapshot(
+    randomNumber,
+    ">=",
+    movieQueryOptions
+  );
   if (randomMovieSnapshot.empty) {
-    randomMovieSnapshot = await getRandomMovieSnapshot(randomNumber, "<=", {
-      providerIds,
-    });
+    randomMovieSnapshot = await getRandomMovieSnapshot(
+      randomNumber,
+      "<=",
+      movieQueryOptions
+    );
   }
   if (randomMovieSnapshot.empty) {
     throw new MovieNotFoundError();

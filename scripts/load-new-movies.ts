@@ -57,11 +57,19 @@ async function loadNewMovies() {
         const providerIds = Array.from(
           new Set(movie.providers.map((provider) => provider.provider_id))
         );
+        const genreIds = Array.from(
+          new Set(movie.genres.map((genre) => genre.id))
+        );
         const moviesRef = collection(getFirestoreDb(), "movies");
         await setDoc(doc(moviesRef, `${movie.id}`), {
           name: movie.title,
           random: Math.random(),
           providers: providerIds,
+          genres: genreIds,
+          release_date: movie.release_date
+            ? new Date(movie.release_date)
+            : null,
+          language: movie.original_language ?? null,
         });
         console.log(`Uploaded: ${movie.title}`);
       }

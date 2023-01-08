@@ -1,11 +1,11 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-import type { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from "next";
 import {
   MovieNotFoundError,
   getMovieWithProvidersById,
   Movie,
   getLatestMovie,
-} from '../../modules/movie';
+} from "../../modules/movie";
 
 function getRandomInt(max: number) {
   return Math.floor(Math.random() * max);
@@ -27,14 +27,14 @@ async function getRandomMovie(
     }
 
     movie.release_date = movie.release_date
-      ? movie.release_date.replace('-', '/')
-      : '';
+      ? movie.release_date.replace(/-/g, "/")
+      : "";
 
     return movie;
   } catch (e) {
     if (e instanceof MovieNotFoundError) {
       if (attemptCount >= MAX_ATTEMPT_COUNT) {
-        throw new Error('Too many attempts to find random movie.');
+        throw new Error("Too many attempts to find random movie.");
       }
       return getRandomMovie(maxId, attemptCount + 1);
     }
