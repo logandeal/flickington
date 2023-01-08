@@ -1,4 +1,4 @@
-import { getFirestoreDb } from './firebase';
+import { getFirestoreDb } from "./firebase";
 
 import {
   collection,
@@ -10,7 +10,12 @@ import {
   where,
   getDocs,
   documentId,
-} from 'firebase/firestore';
+  WhereFilterOp,
+} from "firebase/firestore";
+
+export interface MovieError {
+  error: string;
+}
 
 interface MovieGenre {
   id: number;
@@ -43,9 +48,13 @@ export interface Movie extends MovieStub {
 }
 
 export class MovieNotFoundError extends Error {
-  constructor(movieId: number) {
-    super(`Movie not found: ${movieId}`);
-    this.name = 'MovieNotFoundError';
+  constructor(movieId?: number) {
+    if (movieId) {
+      super(`Movie not found: ${movieId}`);
+    } else {
+      super(`No movies found`);
+    }
+    this.name = "MovieNotFoundError";
     Object.setPrototypeOf(this, MovieNotFoundError.prototype);
   }
 }
@@ -54,7 +63,7 @@ export async function getMovieById(id: number): Promise<Movie> {
   const response = await fetch(
     `https://api.themoviedb.org/3/movie/${id}?api_key=${process.env.TMDB_API_KEY}&language=en-US`,
     {
-      cache: 'no-store',
+      cache: "no-store",
     }
   );
 
@@ -77,7 +86,7 @@ async function getMovieProviders(id: number) {
   const response = await fetch(
     `https://api.themoviedb.org/3/movie/${id}/watch/providers?api_key=${process.env.TMDB_API_KEY}&language=en-US`,
     {
-      cache: 'no-store',
+      cache: "no-store",
     }
   );
 
@@ -129,16 +138,38 @@ export async function getLatestMovie(): Promise<Movie> {
   return data;
 }
 
-export async function getRandomMovieId(): Promise<number> {
-  const moviesRef = collection(getFirestoreDb(), 'movies');
-  const randomMovieQuery = await query(
-    moviesRef,
-    where('random', '>=', Math.random()),
-    limit(1)
-  );
-  const randomMovieSnapshot = await getDocs(randomMovieQuery);
+export interface MovieQueryOptions {
+  providerIds?: number[];
+}
+
+async function getRandomMovieSnapshot(
+  randomNumber: number,
+  op: WhereFilterOp,
+  { providerIds = [] }: MovieQueryOptions = {}
+) {
+  const moviesRef = collection(getFirestoreDb(), "movies");
+  let q = query(moviesRef, where("random", op, randomNumber));
+  if (providerIds.length > 0) {
+    q = query(q, where("providers", "array-contains-any", providerIds));
+  }
+  q = query(q, limit(1));
+  return await getDocs(q);
+}
+
+export async function getRandomMovieId({
+  providerIds = [],
+}: MovieQueryOptions = {}): Promise<number> {
+  const randomNumber = Math.random();
+  let randomMovieSnapshot = await getRandomMovieSnapshot(randomNumber, ">=", {
+    providerIds,
+  });
   if (randomMovieSnapshot.empty) {
-    return 0;
+    randomMovieSnapshot = await getRandomMovieSnapshot(randomNumber, "<=", {
+      providerIds,
+    });
+  }
+  if (randomMovieSnapshot.empty) {
+    throw new MovieNotFoundError();
   }
   return new Promise((resolve) => {
     randomMovieSnapshot.forEach((doc) => {

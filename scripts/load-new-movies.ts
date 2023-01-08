@@ -1,4 +1,4 @@
-const dotenv = require('dotenv');
+const dotenv = require("dotenv");
 dotenv.config();
 dotenv.config({ path: `.env.local`, override: true });
 
@@ -11,17 +11,17 @@ import {
   limit,
   getDocs,
   documentId,
-} from 'firebase/firestore';
+} from "firebase/firestore";
 import {
   getLatestMovie,
   getMovieWithProvidersById,
   MovieNotFoundError,
-} from '../modules/movie';
+} from "../modules/movie";
 
-import { getFirestoreDb } from '../modules/firebase';
+import { getFirestoreDb } from "../modules/firebase";
 
 async function getLatestDatabaseMovieId(): Promise<number> {
-  const moviesRef = collection(getFirestoreDb(), 'movies');
+  const moviesRef = collection(getFirestoreDb(), "movies");
   const lastMovieQuery = await query(
     moviesRef,
     orderBy(documentId()),
@@ -57,7 +57,7 @@ async function loadNewMovies() {
         const providerIds = Array.from(
           new Set(movie.providers.map((provider) => provider.provider_id))
         );
-        const moviesRef = collection(getFirestoreDb(), 'movies');
+        const moviesRef = collection(getFirestoreDb(), "movies");
         await setDoc(doc(moviesRef, `${movie.id}`), {
           name: movie.title,
           random: Math.random(),

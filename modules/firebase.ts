@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp } from "firebase/app";
 import {
   collection,
   doc,
@@ -10,11 +10,21 @@ import {
   getFirestore,
   connectFirestoreEmulator,
   documentId,
-} from 'firebase/firestore';
+} from "firebase/firestore";
 
-const firebaseApp = initializeApp({ projectId: 'flickington' });
+const firebaseApp = initializeApp({ projectId: "flickington" });
 const db = getFirestore();
-connectFirestoreEmulator(db, 'localhost', 8080);
+function startEmulators() {
+  if (!global.areEmulatorsStarted) {
+    console.log("Starting emulators...");
+    global.areEmulatorsStarted = true;
+    connectFirestoreEmulator(db, "localhost", 8080);
+  }
+}
+
+if (process.env.NODE_ENV === "development") {
+  startEmulators();
+}
 
 export function getFirestoreDb() {
   return db;
