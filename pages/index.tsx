@@ -1,9 +1,9 @@
-"use client";
-import { CacheProvider, css } from "@emotion/react";
-import Head from "next/head";
-import Image from "next/image";
-import { Inter } from "@next/font/google";
-import styles from "../styles/Home.module.css";
+'use client';
+import { CacheProvider, css } from '@emotion/react';
+import Head from 'next/head';
+import Image from 'next/image';
+import { Inter } from '@next/font/google';
+import styles from '../styles/Home.module.css';
 import {
   Button,
   Skeleton,
@@ -18,13 +18,13 @@ import {
   Toolbar,
   Container,
   Box,
-} from "@mui/material";
-import { LoadingButton, TimePicker } from "@mui/lab";
-import { QueryClient, QueryClientProvider, useQuery } from "react-query";
-import { Movie } from "./api/movie";
-import { useState } from "react";
+} from '@mui/material';
+import { LoadingButton, TimePicker } from '@mui/lab';
+import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
+import { Movie } from '../modules/movie';
+import { useState } from 'react';
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] });
 
 const queryClient = new QueryClient();
 
@@ -42,23 +42,23 @@ function Home() {
     movie: Movie | null;
     error: Error | null;
   }>({
-    status: "initial",
+    status: 'initial',
     movie: null,
     error: null,
   });
 
   async function loadRandomMovie() {
-    setCurrentMovieState((state) => ({ ...state, status: "loading" }));
+    setCurrentMovieState((state) => ({ ...state, status: 'loading' }));
     try {
-      const res = await fetch("/api/movie");
+      const res = await fetch('/api/movie');
       setCurrentMovieState({
-        status: "loaded",
+        status: 'loaded',
         movie: await res.json(),
         error: null,
       });
     } catch (e) {
       setCurrentMovieState({
-        status: "error",
+        status: 'error',
         movie: null,
         error: e as Error,
       });
@@ -73,7 +73,7 @@ function Home() {
         <link rel="icon" href="/favicon.png" />
       </Head>
       <CssBaseline />
-      <AppBar position="relative" sx={{ p: 1, alignItems: "center" }}>
+      <AppBar position="relative" sx={{ p: 1, alignItems: 'center' }}>
         <Toolbar variant="dense">
           <img src="/logo-white.png" height="68" width="94" />
           <Typography variant="h3" fontWeight={600} sx={{ ml: 1 }}>
@@ -95,12 +95,12 @@ function Home() {
             // flex-direction: column;
           `}
         >
-          <Card sx={{ margin: "auto", maxWidth: 600 }}>
+          <Card sx={{ margin: 'auto', maxWidth: 600 }}>
             <CardContent>
               <Typography
                 variant="h4"
                 color="text.secondary"
-                sx={{ textAlign: "center" }}
+                sx={{ textAlign: 'center' }}
               >
                 Find your next movie to watch!
               </Typography>
@@ -111,7 +111,7 @@ function Home() {
                   margin-top: 10px;
                 `}
               >
-                {currentMovieState.status === "loading" ? (
+                {currentMovieState.status === 'loading' ? (
                   <LoadingButton loading variant="contained">
                     Reveal Movie
                   </LoadingButton>
@@ -147,7 +147,7 @@ function Home() {
             <Typography
               variant="h6"
               color="text.secondary"
-              sx={{ textAlign: "center" }}
+              sx={{ textAlign: 'center' }}
             >
               This project uses the &nbsp;
             </Typography>
@@ -155,7 +155,7 @@ function Home() {
             <Typography
               variant="h6"
               color="text.secondary"
-              sx={{ textAlign: "center" }}
+              sx={{ textAlign: 'center' }}
             >
               &nbsp; API but is not endorsed or certified by &nbsp;
             </Typography>
@@ -163,7 +163,7 @@ function Home() {
             <Typography
               variant="h6"
               color="text.secondary"
-              sx={{ textAlign: "center" }}
+              sx={{ textAlign: 'center' }}
             >
               .
             </Typography>
@@ -208,10 +208,10 @@ export function MovieContent({ movie }: { movie: Movie }) {
           width="0"
           onLoad={() => {
             setMoviePosterLoading(0);
-            var thisImg = document.getElementById("posterImage");
+            var thisImg = document.getElementById('posterImage');
             if (thisImg != null) {
-              thisImg.setAttribute("width", "182");
-              thisImg.setAttribute("height", "282");
+              thisImg.setAttribute('width', '182');
+              thisImg.setAttribute('height', '282');
             }
           }}
         />
@@ -221,14 +221,14 @@ export function MovieContent({ movie }: { movie: Movie }) {
         <p>Release Date: {new Date(movie.release_date).toLocaleDateString()}</p>
       )}
       {movie.genres && movie.genres.length > 0 && (
-        <p>Genres: {movie.genres.map((genre) => genre.name).join(", ")}</p>
+        <p>Genres: {movie.genres.map((genre) => genre.name).join(', ')}</p>
       )}
       <p>{movie.overview}</p>
       {movie.providers && movie.providers.length > 0 && (
         <ul>
           {movie.providers.map((provider) => (
             <li key={provider.provider_id}>
-              {provider.provider_name} ({provider.type}):{" "}
+              {provider.provider_name} ({provider.type}):{' '}
               <img src={provider.logo_path} height="30" width="30" />
             </li>
           ))}
