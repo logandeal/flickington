@@ -2,8 +2,6 @@ const dotenv = require('dotenv');
 dotenv.config();
 dotenv.config({ path: `.env.local`, override: true });
 
-import fs from 'fs';
-import { initializeApp } from 'firebase/app';
 import {
   collection,
   doc,
@@ -12,23 +10,18 @@ import {
   orderBy,
   limit,
   getDocs,
-  getFirestore,
-  connectFirestoreEmulator,
   documentId,
 } from 'firebase/firestore';
 import {
   getLatestMovie,
   getMovieWithProvidersById,
   MovieNotFoundError,
-  MovieStub,
 } from '../modules/movie';
 
-const firebaseApp = initializeApp({ projectId: 'flickington' });
-const db = getFirestore();
-connectFirestoreEmulator(db, 'localhost', 8080);
+import { getFirestoreDb } from '../modules/firebase';
 
 async function getLatestDatabaseMovieId(): Promise<number> {
-  const moviesRef = collection(db, 'movies');
+  const moviesRef = collection(getFirestoreDb(), 'movies');
   const lastMovieQuery = await query(
     moviesRef,
     orderBy(documentId()),
@@ -64,7 +57,7 @@ async function loadNewMovies() {
         const providerIds = Array.from(
           new Set(movie.providers.map((provider) => provider.provider_id))
         );
-        const moviesRef = collection(db, 'movies');
+        const moviesRef = collection(getFirestoreDb(), 'movies');
         await setDoc(doc(moviesRef, `${movie.id}`), {
           name: movie.title,
           random: Math.random(),

@@ -1,3 +1,17 @@
+import { getFirestoreDb } from './firebase';
+
+import {
+  collection,
+  doc,
+  setDoc,
+  query,
+  orderBy,
+  limit,
+  where,
+  getDocs,
+  documentId,
+} from 'firebase/firestore';
+
 interface MovieGenre {
   id: number;
   name: string;
@@ -113,4 +127,22 @@ export async function getLatestMovie(): Promise<Movie> {
   const data = await response.json();
 
   return data;
+}
+
+export async function getRandomMovieId(): Promise<number> {
+  const moviesRef = collection(getFirestoreDb(), 'movies');
+  const randomMovieQuery = await query(
+    moviesRef,
+    where('random', '>=', Math.random()),
+    limit(1)
+  );
+  const randomMovieSnapshot = await getDocs(randomMovieQuery);
+  if (randomMovieSnapshot.empty) {
+    return 0;
+  }
+  return new Promise((resolve) => {
+    randomMovieSnapshot.forEach((doc) => {
+      resolve(Number(doc.id));
+    });
+  });
 }
