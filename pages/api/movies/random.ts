@@ -59,6 +59,7 @@ export default async function handler(
   const providerIds = providersParams
     .map((providersString) => providersString.split(","))
     .flat()
+    .filter(Boolean)
     .map(Number);
   try {
     const movie = await getRandomMovie({
