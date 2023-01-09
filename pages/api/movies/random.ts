@@ -74,11 +74,23 @@ export default async function handler(
     Number
   );
   const languageCodes = getCommaSeparatedParameterValues(req.query.languages);
+  const releaseDateBeforeString =
+    arrayify(req.query.release_date_before)[0] ?? "";
+  const releaseDateBefore = releaseDateBeforeString
+    ? new Date(releaseDateBeforeString)
+    : undefined;
+  const releaseDateAfterString =
+    arrayify(req.query.release_date_after)[0] ?? "";
+  const releaseDateAfter = releaseDateAfterString
+    ? new Date(releaseDateAfterString)
+    : undefined;
   try {
     const movie = await getRandomMovie({
       providerIds,
       genreIds,
       languageCodes,
+      releaseDateAfter,
+      releaseDateBefore,
     });
     res.status(200).json(movie);
   } catch (e) {

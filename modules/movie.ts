@@ -11,7 +11,10 @@ import {
   getDocs,
   documentId,
   WhereFilterOp,
+  QuerySnapshot,
+  DocumentData,
 } from "firebase/firestore";
+import { getRandomBase64, getRandomInt } from "./random";
 
 export interface MovieError {
   error: string;
@@ -144,52 +147,68 @@ export interface MovieQueryOptions {
   providerIds?: number[];
   genreIds?: number[];
   languageCodes?: string[];
+  releaseDateBefore?: Date;
+  releaseDateAfter?: Date;
 }
 
 async function getRandomMovieSnapshot(
-  randomNumber: number,
+  randomKey: string,
   op: WhereFilterOp,
   {
     providerIds = [],
     genreIds = [],
     languageCodes = [],
+    releaseDateBefore = undefined,
+    releaseDateAfter = undefined,
   }: MovieQueryOptions = {}
-) {
+): Promise<QuerySnapshot<DocumentData>> {
   const moviesRef = collection(getFirestoreDb(), "movies");
-  let q = query(moviesRef, where("random", op, randomNumber));
+  let q = query(moviesRef, where("random", op, randomKey));
   if (providerIds.length > 0) {
     q = query(q, where("providers", "array-contains-any", providerIds));
   }
   if (genreIds.length > 0) {
-    q = query(q, where("genres", "array-contains-any", genreIds));
+    const randomGenreIndex = getRandomInt(0, genreIds.length);
+    const spliced = genreIds.splice(randomGenreIndex, 1);
+    genreIds.unshift(spliced[0]);
+    q = query(q, where(`genres.${genreIds[0]}`, "==", true));
   }
   if (languageCodes.length > 0) {
-    q = query(
-      q,
-      where(
-        "language",
-        "in",
-        languageCodes.map((code) => code.toLowerCase())
-      )
-    );
+    q = query(q, where("language", "==", languageCodes[0]));
   }
-  q = query(q, limit(1));
-  return await getDocs(q);
+  // if (releaseDateAfter) {
+  //   q = query(q, where("release_date", ">=", releaseDateAfter));
+  // }
+  // if (releaseDateBefore) {
+  //   q = query(q, where("release_date", ">=", releaseDateBefore));
+  // }
+  q = query(q, orderBy("random"), limit(1));
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) {
+    if (genreIds.length > 1) {
+      return getRandomMovieSnapshot(randomKey, op, {
+        providerIds,
+        genreIds: genreIds.slice(1),
+        languageCodes,
+      });
+    }
+  }
+  return snapshot;
 }
 
 export async function getRandomMovieId(
   movieQueryOptions: MovieQueryOptions = {}
 ): Promise<number> {
-  const randomNumber = Math.random();
+  const randomKey = getRandomBase64(8);
   let randomMovieSnapshot = await getRandomMovieSnapshot(
-    randomNumber,
+    randomKey,
     ">=",
     movieQueryOptions
   );
   if (randomMovieSnapshot.empty) {
     randomMovieSnapshot = await getRandomMovieSnapshot(
-      randomNumber,
-      "<=",
+      "",
+      ">=",
       movieQueryOptions
     );
   }

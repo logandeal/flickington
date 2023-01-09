@@ -17,6 +17,7 @@ import {
   getMovieWithProvidersById,
   MovieNotFoundError,
 } from "../modules/movie";
+import { getRandomBase64 } from "../modules/random";
 
 import { getFirestoreDb } from "../modules/firebase";
 
@@ -63,9 +64,9 @@ async function loadNewMovies() {
         const moviesRef = collection(getFirestoreDb(), "movies");
         await setDoc(doc(moviesRef, `${movie.id}`), {
           name: movie.title,
-          random: Math.random(),
+          random: getRandomBase64(8),
           providers: providerIds,
-          genres: genreIds,
+          genres: Object.fromEntries(genreIds.map((id) => [id, true])),
           release_date: movie.release_date
             ? new Date(movie.release_date)
             : null,
