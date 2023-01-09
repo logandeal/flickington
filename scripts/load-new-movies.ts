@@ -2,6 +2,82 @@ const dotenv = require("dotenv");
 dotenv.config();
 dotenv.config({ path: `.env.local`, override: true });
 
+import prisma from "../modules/prisma";
+
+import {
+  getLatestMovie,
+  getMovieWithProvidersById,
+  MovieNotFoundError,
+} from "../modules/movie";
+
+async function delay(ms: number): Promise<number> {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(ms), ms >= 0 ? ms : 0);
+  });
+}
+
+const MOVIE_REQUESTS_PER_SECOND = 10;
+
+async function getLatestDatabaseMovieId(): Promise<number> {
+  const movies = await prisma.movie.findMany({
+    orderBy: {
+      id: "asc",
+    },
+    take: -1,
+  });
+  if (movies.length > 0) {
+    return movies[0].id;
+  }
+  return 0;
+}
+
+async function loadNewMovies() {
+  const latestMovie = await getLatestMovie();
+  const latestDbId = await getLatestDatabaseMovieId();
+  for (let movieId = latestDbId + 1; movieId <= latestMovie.id; movieId++) {
+    const beginTime = Date.now();
+    try {
+      const movie = await getMovieWithProvidersById(movieId);
+      if (movie.providers.length > 0) {
+        const providerIds = Array.from(
+          new Set(movie.providers.map((provider) => provider.provider_id))
+        );
+        const genreIds = Array.from(
+          new Set(movie.genres.map((genre) => genre.id))
+        );
+        await prisma.movie.create({
+          data: {
+            id: movieId,
+            title: movie.title,
+            providers: {
+              create: providerIds.map((providerId) => ({
+                providerId,
+              })),
+            },
+            genres: {
+              create: genreIds.map((genreId) => ({
+                genreId,
+              })),
+            },
+          },
+        });
+        console.log(`Uploaded: ${movie.title}`);
+      }
+    } catch (e) {
+      if (!(e instanceof MovieNotFoundError)) {
+        throw e;
+      }
+    }
+
+    const endTime = Date.now();
+    const delta = endTime - beginTime;
+    const waitTimeInMs = 1000 / MOVIE_REQUESTS_PER_SECOND;
+    const remainingTimeInMs = waitTimeInMs - delta;
+    await delay(remainingTimeInMs);
+  }
+}
+
+/*
 import {
   collection,
   doc,
@@ -12,11 +88,7 @@ import {
   getDocs,
   documentId,
 } from "firebase/firestore";
-import {
-  getLatestMovie,
-  getMovieWithProvidersById,
-  MovieNotFoundError,
-} from "../modules/movie";
+
 import { getRandomBase64 } from "../modules/random";
 
 import { getFirestoreDb } from "../modules/firebase";
@@ -88,5 +160,6 @@ async function loadNewMovies() {
   }
   process.exit();
 }
+*/
 
 loadNewMovies();
