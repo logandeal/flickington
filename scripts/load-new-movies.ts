@@ -7,6 +7,7 @@ import crypto from "crypto";
 import { getRandomInt } from "../modules/random";
 
 import {
+  getLatestDatabaseMovieId,
   getLatestMovie,
   getMovieWithProvidersById,
   MovieNotFoundError,
@@ -19,19 +20,6 @@ async function delay(ms: number): Promise<number> {
 }
 
 const MOVIE_REQUESTS_PER_SECOND = 10;
-
-async function getLatestDatabaseMovieId(): Promise<number> {
-  const movies = await prisma.movie.findMany({
-    orderBy: {
-      id: "asc",
-    },
-    take: -1,
-  });
-  if (movies.length > 0) {
-    return movies[0].id;
-  }
-  return 0;
-}
 
 function getUnsignedRandomInt63() {
   const firstByte = getRandomInt(0, 128);
@@ -67,7 +55,7 @@ async function loadNewMovies() {
             language: movie.original_language || "",
             providers: providerIds,
             genres: genreIds,
-            random: getUnsignedRandomInt63(),
+            // random: getUnsignedRandomInt63(),
           },
         });
         console.log(`Uploaded: ${movie.title}`);

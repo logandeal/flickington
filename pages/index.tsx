@@ -221,7 +221,7 @@ export function MovieContent({ movie }: { movie: Movie }) {
         <p>Release Date: {new Date(movie.release_date).toLocaleDateString()}</p>
       )}
       {movie.genres && movie.genres.length > 0 && (
-        <p>Genres: {movie.genres.map((genre) => genre.name).join(", ")}</p>
+        <p>Genre(s): {movie.genres.map((genre) => genre.name).join(", ")}</p>
       )}
       <p>{movie.overview}</p>
       {movie.providers && movie.providers.length > 0 && (
