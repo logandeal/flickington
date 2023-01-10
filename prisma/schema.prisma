@@ -11,22 +11,11 @@ datasource db {
 }
 
 model Movie {
-  id        Int       @id
-  title     String
-  providers MovieProvider[]
-  genres    MovieGenre[]
-}
-
-model MovieProvider {
-  id         Int  @id @default(autoincrement())
-  movie      Movie @relation(fields: [movieId], references: [id])
-  movieId    Int
-  providerId Int
-}
-
-model MovieGenre {
-  id         Int  @id @default(autoincrement())
-  movie      Movie @relation(fields: [movieId], references: [id])
-  movieId    Int
-  genreId    Int
+  id           Int       @id
+  title        String
+  release_date DateTime?
+  language     String
+  providers    Json
+  genres       Json
+  random       BigInt    @db.UnsignedBigInt
 }

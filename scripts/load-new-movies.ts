@@ -3,6 +3,8 @@ dotenv.config();
 dotenv.config({ path: `.env.local`, override: true });
 
 import prisma from "../modules/prisma";
+import crypto from "crypto";
+import { getRandomInt } from "../modules/random";
 
 import {
   getLatestMovie,
@@ -31,6 +33,16 @@ async function getLatestDatabaseMovieId(): Promise<number> {
   return 0;
 }
 
+function getUnsignedRandomInt63() {
+  const firstByte = getRandomInt(0, 128);
+  const buffer = Buffer.concat([
+    Buffer.from([firstByte]),
+    crypto.randomBytes(7),
+  ]);
+  console.log(buffer);
+  return BigInt("0x" + buffer.toString("hex"));
+}
+
 async function loadNewMovies() {
   const latestMovie = await getLatestMovie();
   const latestDbId = await getLatestDatabaseMovieId();
@@ -48,17 +60,14 @@ async function loadNewMovies() {
         await prisma.movie.create({
           data: {
             id: movieId,
-            title: movie.title,
-            providers: {
-              create: providerIds.map((providerId) => ({
-                providerId,
-              })),
-            },
-            genres: {
-              create: genreIds.map((genreId) => ({
-                genreId,
-              })),
-            },
+            title: movie.title || "",
+            release_date: movie.release_date
+              ? new Date(movie.release_date)
+              : null,
+            language: movie.original_language || "",
+            providers: providerIds,
+            genres: genreIds,
+            random: getUnsignedRandomInt63(),
           },
         });
         console.log(`Uploaded: ${movie.title}`);
