@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -15,7 +15,6 @@ model Movie {
   title        String
   release_date DateTime?
   language     String
-  providers    Json
-  genres       Json
-  random       BigInt    @db.UnsignedBigInt
+  providers    Int[]
+  genres       Int[]
 }

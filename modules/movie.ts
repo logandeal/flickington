@@ -1,3 +1,5 @@
+import prisma from "../modules/prisma";
+
 import { getFirestoreDb } from "./firebase";
 
 import {
@@ -151,9 +153,22 @@ export interface MovieQueryOptions {
   releaseDateAfter?: Date;
 }
 
-async function getRandomMovieSnapshot(
-  randomKey: string,
-  op: WhereFilterOp,
+export async function getLatestDatabaseMovieId(): Promise<number> {
+  const movies = await prisma.movie.findMany({
+    orderBy: {
+      id: "asc",
+    },
+    take: -1,
+  });
+  if (movies.length > 0) {
+    return movies[0].id;
+  }
+  return 0;
+}
+
+async function getMovieAtPosition(
+  randomKey: number,
+  op: string,
   {
     providerIds = [],
     genreIds = [],
@@ -161,63 +176,97 @@ async function getRandomMovieSnapshot(
     releaseDateBefore = undefined,
     releaseDateAfter = undefined,
   }: MovieQueryOptions = {}
-): Promise<QuerySnapshot<DocumentData>> {
-  const moviesRef = collection(getFirestoreDb(), "movies");
-  let q = query(moviesRef, where("random", op, randomKey));
-  if (providerIds.length > 0) {
-    q = query(q, where("providers", "array-contains-any", providerIds));
-  }
-  if (genreIds.length > 0) {
-    const randomGenreIndex = getRandomInt(0, genreIds.length);
-    const spliced = genreIds.splice(randomGenreIndex, 1);
-    genreIds.unshift(spliced[0]);
-    q = query(q, where(`genres.${genreIds[0]}`, "==", true));
-  }
-  if (languageCodes.length > 0) {
-    q = query(q, where("language", "==", languageCodes[0]));
-  }
+): Promise<Movie> {
+  const movie = await prisma.movie.findMany({
+    take: 10,
+    where: {
+      AND: [
+        {
+          id: {
+            [op]: randomKey,
+          },
+        },
+        {
+          language: languageCodes[0],
+        },
+        {
+          release_date: {
+            lte: releaseDateBefore,
+            gte: releaseDateAfter,
+          },
+        },
+        {
+          providers:
+            providerIds.length > 0
+              ? {
+                  hasSome: providerIds,
+                }
+              : undefined,
+        },
+        {
+          genres:
+            genreIds.length > 0
+              ? {
+                  hasSome: genreIds,
+                }
+              : undefined,
+        },
+      ],
+    },
+  });
+  const chosenIndex = getRandomInt(0, movie.length);
+  // let q = query(moviesRef, where("random", op, randomKey));
+  // if (providerIds.length > 0) {
+  //   q = query(q, where("providers", "array-contains-any", providerIds));
+  // }
+  // if (genreIds.length > 0) {
+  //   const randomGenreIndex = getRandomInt(0, genreIds.length);
+  //   const spliced = genreIds.splice(randomGenreIndex, 1);
+  //   genreIds.unshift(spliced[0]);
+  //   q = query(q, where(`genres.${genreIds[0]}`, "==", true));
+  // }
+  // if (languageCodes.length > 0) {
+  //   q = query(q, where("language", "==", languageCodes[0]));
+  // }
   // if (releaseDateAfter) {
   //   q = query(q, where("release_date", ">=", releaseDateAfter));
   // }
   // if (releaseDateBefore) {
   //   q = query(q, where("release_date", ">=", releaseDateBefore));
   // }
-  q = query(q, orderBy("random"), limit(1));
-  const snapshot = await getDocs(q);
-  if (snapshot.empty) {
-    if (genreIds.length > 1) {
-      return getRandomMovieSnapshot(randomKey, op, {
-        providerIds,
-        genreIds: genreIds.slice(1),
-        languageCodes,
-      });
-    }
-  }
-  return snapshot;
+  // q = query(q, orderBy("random"), limit(1));
+  // const snapshot = await getDocs(q);
+  // if (snapshot.empty) {
+  //   if (genreIds.length > 1) {
+  //     return getMovieAtPosition(randomKey, op, {
+  //       providerIds,
+  //       genreIds: genreIds.slice(1),
+  //       languageCodes,
+  //     });
+  //   }
+  // }
+  return movie[chosenIndex];
 }
 
 export async function getRandomMovieId(
   movieQueryOptions: MovieQueryOptions = {}
 ): Promise<number> {
-  const randomKey = getRandomBase64(8);
-  let randomMovieSnapshot = await getRandomMovieSnapshot(
+  const maxMovieId = await getLatestDatabaseMovieId();
+  const randomKey = getRandomInt(1, maxMovieId + 1);
+  let movieAtPosition = await getMovieAtPosition(
     randomKey,
-    ">=",
+    "gte",
     movieQueryOptions
   );
-  if (randomMovieSnapshot.empty) {
-    randomMovieSnapshot = await getRandomMovieSnapshot(
-      "",
-      ">=",
+  if (!movieAtPosition) {
+    movieAtPosition = await getMovieAtPosition(
+      randomKey,
+      "lte",
       movieQueryOptions
     );
   }
-  if (randomMovieSnapshot.empty) {
+  if (!movieAtPosition) {
     throw new MovieNotFoundError();
   }
-  return new Promise((resolve) => {
-    randomMovieSnapshot.forEach((doc) => {
-      resolve(Number(doc.id));
-    });
-  });
+  return movieAtPosition.id;
 }
