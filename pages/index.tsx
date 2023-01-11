@@ -18,11 +18,21 @@ import {
   Toolbar,
   Container,
   Box,
+  Autocomplete,
+  TextField,
+  Stack,
+  SelectChangeEvent,
+  FormControl,
+  InputLabel,
+  Select,
+  OutlinedInput,
+  Chip,
+  MenuItem,
 } from "@mui/material";
 import { LoadingButton, TimePicker } from "@mui/lab";
 import { QueryClient, QueryClientProvider, useQuery } from "react-query";
-import { Movie } from "../modules/movie";
-import { useState } from "react";
+import { Movie, MovieGenre, MovieProvider } from "../modules/movie";
+import { useMemo, useState } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -33,6 +43,111 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <Home />
     </QueryClientProvider>
+  );
+}
+
+function ProviderPicker({
+  onChange,
+}: {
+  onChange: (providers: MovieProvider[]) => void;
+}) {
+  const { isLoading, error, data } = useQuery<MovieProvider[], Error>(
+    "providerData",
+    () => fetch("/api/providers").then((res) => res.json())
+  );
+
+  if (error) return <>An error has occurred: {error.message}</>;
+
+  return (
+    <Autocomplete
+      multiple
+      id="providers-select"
+      options={data || []}
+      getOptionLabel={(option) => option.provider_name}
+      defaultValue={[]}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          variant="standard"
+          label="Providers"
+          placeholder={isLoading ? "Loading..." : "Type provider name..."}
+        />
+      )}
+      onChange={(event: any, newProviders: any) => {
+        onChange(newProviders);
+      }}
+    />
+  );
+}
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
+
+function GenrePicker({
+  onChange,
+}: {
+  onChange: (genres: MovieGenre[]) => void;
+}) {
+  const [genreIds, setGenreIds] = useState<number[]>([]);
+
+  const { isLoading, error, data } = useQuery<MovieGenre[], Error>(
+    "genreData",
+    () => fetch("/api/genres").then((res) => res.json())
+  );
+
+  const genreMap = useMemo(() => {
+    return Object.fromEntries((data || []).map((genre) => [genre.id, genre]));
+  }, [data]);
+
+  if (error) return <>An error has occurred: {error.message}</>;
+
+  const handleChange = (event: SelectChangeEvent<typeof genreIds>) => {
+    const {
+      target: { value },
+    } = event;
+    // On autofill we get a stringified value.
+    const newGenreIds =
+      typeof value === "string" ? value.split(",").map(Number) : value;
+    onChange((data || []).filter((genre) => newGenreIds.includes(genre.id)));
+    setGenreIds(newGenreIds);
+  };
+
+  return (
+    <div>
+      <FormControl sx={{ m: 1, width: 300 }}>
+        <InputLabel id="genres-input-label">Genres</InputLabel>
+        <Select
+          labelId="genres-select-label"
+          id="genres-select"
+          multiple
+          value={genreIds}
+          onChange={handleChange}
+          input={<OutlinedInput id="select-multiple-genre" label="Genres" />}
+          renderValue={(selected) => (
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+              {selected.map((value) => (
+                <Chip key={value} label={genreMap[value].name} />
+              ))}
+            </Box>
+          )}
+          MenuProps={MenuProps}
+        >
+          {(data || []).map((genre) => (
+            <MenuItem key={genre.id} value={genre.id}>
+              {genre.name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    </div>
   );
 }
 
@@ -47,10 +162,21 @@ function Home() {
     error: null,
   });
 
+  const [providers, setProviders] = useState<MovieProvider[]>([]);
+  const [genres, setGenres] = useState<MovieGenre[]>([]);
+
   async function loadRandomMovie() {
     setCurrentMovieState((state) => ({ ...state, status: "loading" }));
     try {
-      const res = await fetch("/api/movie");
+      const res = await fetch(
+        "/api/movies/random?" +
+          new URLSearchParams({
+            providers: providers
+              .map((provider) => provider.provider_id)
+              .join(","),
+            genres: genres.map((genre) => genre.id).join(","),
+          })
+      );
       setCurrentMovieState({
         status: "loaded",
         movie: await res.json(),
@@ -104,6 +230,18 @@ function Home() {
               >
                 Find your next movie to watch!
               </Typography>
+              <div
+                css={css`
+                  display: flex;
+                  justify-content: center;
+                  margin-top: 10px;
+                `}
+              >
+                <Stack spacing={3} sx={{ width: 500 }}>
+                  <ProviderPicker onChange={setProviders} />
+                  <GenrePicker onChange={setGenres} />
+                </Stack>
+              </div>
               <div
                 css={css`
                   display: flex;

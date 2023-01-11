@@ -22,12 +22,12 @@ export interface MovieError {
   error: string;
 }
 
-interface MovieGenre {
+export interface MovieGenre {
   id: number;
   name: string;
 }
 
-interface MovieProvider {
+export interface MovieProvider {
   provider_id: number;
   logo_path: string;
   provider_name: string;
