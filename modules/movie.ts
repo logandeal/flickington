@@ -196,25 +196,53 @@ async function getMovieAtPosition(
           },
         },
         {
-          providers:
+          OR:
             providerIds.length > 0
-              ? {
-                  hasSome: providerIds,
-                }
+              ? providerIds.map((id) => ({
+                  providers: {
+                    array_contains: [id],
+                  },
+                }))
               : undefined,
         },
         {
-          genres:
+          OR:
             genreIds.length > 0
-              ? {
-                  hasSome: genreIds,
-                }
+              ? genreIds.map((id) => ({
+                  genres: {
+                    array_contains: [id],
+                  },
+                }))
               : undefined,
         },
+        // {
+        //   genres:
+        //     genreIds.length > 0
+        //       ? {
+        //           hasSome: genreIds,
+        //         }
+        //       : undefined,
+        // },
+        // {
+        //   providers:
+        //     providerIds.length > 0
+        //       ? {
+        //           hasSome: providerIds,
+        //         }
+        //       : undefined,
+        // },
+        // {
+        //   genres:
+        //     genreIds.length > 0
+        //       ? {
+        //           hasSome: genreIds,
+        //         }
+        //       : undefined,
+        // },
       ],
     },
   });
-  const chosenIndex = getRandomInt(0, movie.length);
+  return movie[getRandomInt(0, movie.length)];
   // let q = query(moviesRef, where("random", op, randomKey));
   // if (providerIds.length > 0) {
   //   q = query(q, where("providers", "array-contains-any", providerIds));
@@ -245,7 +273,6 @@ async function getMovieAtPosition(
   //     });
   //   }
   // }
-  return movie[chosenIndex];
 }
 
 export async function getRandomMovieId(
