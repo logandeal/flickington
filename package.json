@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "firebase": "firebase emulators:start"
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@emotion/react": "^11.10.5",
