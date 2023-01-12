@@ -1,22 +1,6 @@
 import prisma from "../modules/prisma";
 
-import { getFirestoreDb } from "./firebase";
-
-import {
-  collection,
-  doc,
-  setDoc,
-  query,
-  orderBy,
-  limit,
-  where,
-  getDocs,
-  documentId,
-  WhereFilterOp,
-  QuerySnapshot,
-  DocumentData,
-} from "firebase/firestore";
-import { getRandomBase64, getRandomInt } from "./random";
+import { getRandomInt } from "./random";
 
 export interface MovieError {
   error: string;
