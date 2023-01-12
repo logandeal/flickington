@@ -154,16 +154,12 @@ export interface MovieQueryOptions {
 }
 
 export async function getLatestDatabaseMovieId(): Promise<number> {
-  const movies = await prisma.movie.findMany({
-    orderBy: {
-      id: "asc",
+  const aggregates = await prisma.movie.aggregate({
+    _max: {
+      id: true,
     },
-    take: -1,
   });
-  if (movies.length > 0) {
-    return movies[0].id;
-  }
-  return 0;
+  return aggregates._max.id || 0;
 }
 
 async function getMovieAtPosition(
