@@ -3,8 +3,6 @@ dotenv.config();
 dotenv.config({ path: `.env.local`, override: true });
 
 import prisma from "../modules/prisma";
-import crypto from "crypto";
-import { getRandomInt } from "../modules/random";
 
 import {
   getLatestDatabaseMovieId,
@@ -20,16 +18,6 @@ async function delay(ms: number): Promise<number> {
 }
 
 const MOVIE_REQUESTS_PER_SECOND = 10;
-
-function getUnsignedRandomInt63() {
-  const firstByte = getRandomInt(0, 128);
-  const buffer = Buffer.concat([
-    Buffer.from([firstByte]),
-    crypto.randomBytes(7),
-  ]);
-  console.log(buffer);
-  return BigInt("0x" + buffer.toString("hex"));
-}
 
 async function loadNewMovies() {
   const latestMovie = await getLatestMovie();
@@ -73,90 +61,5 @@ async function loadNewMovies() {
     await delay(remainingTimeInMs);
   }
 }
-
-/*
-import {
-  collection,
-  doc,
-  setDoc,
-  query,
-  orderBy,
-  limit,
-  getDocs,
-  documentId,
-} from "firebase/firestore";
-
-import { getRandomBase64 } from "../modules/random";
-
-import { getFirestoreDb } from "../modules/firebase";
-
-async function getLatestDatabaseMovieId(): Promise<number> {
-  const moviesRef = collection(getFirestoreDb(), "movies");
-  const lastMovieQuery = await query(
-    moviesRef,
-    orderBy(documentId()),
-    limit(1)
-  );
-  const lastMovieSnapshot = await getDocs(lastMovieQuery);
-  if (lastMovieSnapshot.empty) {
-    return 0;
-  }
-  return new Promise((resolve) => {
-    lastMovieSnapshot.forEach((doc) => {
-      resolve(Number(doc.id));
-    });
-  });
-}
-
-async function delay(ms: number): Promise<number> {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(ms), ms >= 0 ? ms : 0);
-  });
-}
-
-const MOVIE_REQUESTS_PER_SECOND = 10;
-
-async function loadNewMovies() {
-  const latestMovie = await getLatestMovie();
-  const latestDbId = await getLatestDatabaseMovieId();
-  for (let movieId = latestDbId + 1; movieId <= latestMovie.id; movieId++) {
-    const beginTime = Date.now();
-    try {
-      const movie = await getMovieWithProvidersById(movieId);
-      if (movie.providers.length > 0) {
-        const providerIds = Array.from(
-          new Set(movie.providers.map((provider) => provider.provider_id))
-        );
-        const genreIds = Array.from(
-          new Set(movie.genres.map((genre) => genre.id))
-        );
-        const moviesRef = collection(getFirestoreDb(), "movies");
-        await setDoc(doc(moviesRef, `${movie.id}`), {
-          name: movie.title,
-          random: getRandomBase64(8),
-          providers: providerIds,
-          genres: Object.fromEntries(genreIds.map((id) => [id, true])),
-          release_date: movie.release_date
-            ? new Date(movie.release_date)
-            : null,
-          language: movie.original_language ?? null,
-        });
-        console.log(`Uploaded: ${movie.title}`);
-      }
-    } catch (e) {
-      if (!(e instanceof MovieNotFoundError)) {
-        throw e;
-      }
-    }
-
-    const endTime = Date.now();
-    const delta = endTime - beginTime;
-    const waitTimeInMs = 1000 / MOVIE_REQUESTS_PER_SECOND;
-    const remainingTimeInMs = waitTimeInMs - delta;
-    await delay(remainingTimeInMs);
-  }
-  process.exit();
-}
-*/
 
 loadNewMovies();
