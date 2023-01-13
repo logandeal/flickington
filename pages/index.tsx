@@ -30,6 +30,9 @@ import {
   Chip,
   MenuItem,
 } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { LoadingButton, TimePicker } from "@mui/lab";
 import { QueryClient, QueryClientProvider, useQuery } from "react-query";
 import { Movie, MovieGenre, MovieProvider } from "../modules/movie";
@@ -165,6 +168,54 @@ function GenrePicker({
   );
 }
 
+function FromYearPicker({
+  onChange,
+}: {
+  onChange: (fromYear: string) => void;
+}) {
+  const [fromYear, setFromYear] = useState<string>();
+  return (
+    <DatePicker
+      views={["year"]}
+      label="From"
+      value={fromYear}
+      maxDate="2030"
+      onChange={(newYear) => {
+        if (newYear === null) {
+          setFromYear("");
+        } else {
+          setFromYear(newYear);
+        }
+      }}
+      renderInput={(params) => (
+        <TextField {...params} helperText={null} variant="standard" />
+      )}
+    />
+  );
+}
+
+function ToYearPicker({ onChange }: { onChange: (toYear: string) => void }) {
+  const [toYear, setToYear] = useState<string>();
+  return (
+    <DatePicker
+      views={["year"]}
+      label="To"
+      value={toYear}
+      maxDate="2030"
+      onChange={(newYear) => {
+        if (newYear === null) {
+          setToYear("");
+        } else {
+          setToYear(newYear);
+        }
+      }}
+      renderInput={(params) => (
+        <TextField {...params} helperText={null} variant="standard" />
+      )}
+    />
+  );
+}
+
 function Home() {
   const [currentMovieState, setCurrentMovieState] = useState<{
     status: string;
@@ -178,6 +229,8 @@ function Home() {
 
   const [providers, setProviders] = useState<MovieProvider[]>([]);
   const [genres, setGenres] = useState<MovieGenre[]>([]);
+  const [fromYear, setFromYear] = useState<string>();
+  const [toYear, setToYear] = useState<string>();
 
   async function loadRandomMovie() {
     setCurrentMovieState((state) => ({ ...state, status: "loading" }));
@@ -254,6 +307,16 @@ function Home() {
                 <Stack spacing={3} sx={{ width: 500 }}>
                   <ProviderPicker onChange={setProviders} />
                   <GenrePicker onChange={setGenres} />
+                  <Grid container columnSpacing={4}>
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <Grid item>
+                        <FromYearPicker onChange={setFromYear} />
+                      </Grid>
+                      <Grid item>
+                        <ToYearPicker onChange={setToYear} />
+                      </Grid>
+                    </LocalizationProvider>
+                  </Grid>
                 </Stack>
               </div>
               <div
