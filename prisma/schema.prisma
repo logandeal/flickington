@@ -10,11 +10,31 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Movie {
+model movie {
   id           Int       @id
   title        String
   release_date DateTime?
   language     String
-  providers    Json
-  genres       Json
+  searches     movie_search[]
+  @@index([language, release_date])
+}
+
+model movie_search {
+  id           Int       @id @default(autoincrement())
+  movie        movie     @relation(fields: [movie_id], references: [id])
+  movie_id     Int
+  genre        Int
+  provider     Int
+  @@index([genre, provider])
+  @@index([movie_id, genre, provider])
+}
+
+model movie_load {
+  id              Int       @id @default(autoincrement())
+  type            String
+  created_at      DateTime  @default(now())
+  updated_at      DateTime? @updatedAt
+  start_id        Int
+  end_id          Int
+  completed_count Int?
 }

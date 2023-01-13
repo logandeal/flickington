@@ -128,7 +128,6 @@ export async function getLatestMovie(): Promise<Movie> {
 
   return data;
 }
-
 export interface MovieQueryOptions {
   providerIds?: number[];
   genreIds?: number[];
@@ -137,13 +136,36 @@ export interface MovieQueryOptions {
   releaseDateAfter?: Date;
 }
 
-export async function getLatestDatabaseMovieId(): Promise<number> {
+export async function getMaxDatabaseMovieId(): Promise<number> {
   const aggregates = await prisma.movie.aggregate({
     _max: {
       id: true,
     },
   });
   return aggregates._max.id || 0;
+}
+
+export async function getNextDatabaseMovieId(afterId: number): Promise<number> {
+  const aggregates = await prisma.movie.aggregate({
+    _min: {
+      id: true,
+    },
+    where: {
+      id: {
+        gt: afterId,
+      },
+    },
+  });
+  return aggregates._min.id || Infinity;
+}
+
+export async function doesDatabaseMovieExist(id: number): Promise<boolean> {
+  const count = await prisma.movie.count({
+    where: {
+      id: id,
+    },
+  });
+  return count > 0;
 }
 
 async function getMovieAtPosition(
@@ -176,25 +198,49 @@ async function getMovieAtPosition(
           },
         },
         {
-          OR:
-            providerIds.length > 0
-              ? providerIds.map((id) => ({
-                  providers: {
-                    array_contains: [id],
-                  },
-                }))
-              : undefined,
+          searches: {
+            some: {
+              OR:
+                providerIds.length > 0
+                  ? providerIds.map((id) => ({
+                      provider: id,
+                    }))
+                  : undefined,
+            },
+          },
         },
         {
-          OR:
-            genreIds.length > 0
-              ? genreIds.map((id) => ({
-                  genres: {
-                    array_contains: [id],
-                  },
-                }))
-              : undefined,
+          searches: {
+            some: {
+              OR:
+                genreIds.length > 0
+                  ? genreIds.map((id) => ({
+                      genre: id,
+                    }))
+                  : undefined,
+            },
+          },
         },
+        // {
+        //   OR:
+        //     providerIds.length > 0
+        //       ? providerIds.map((id) => ({
+        //           providers: {
+        //             array_contains: [id],
+        //           },
+        //         }))
+        //       : undefined,
+        // },
+        // {
+        //   OR:
+        //     genreIds.length > 0
+        //       ? genreIds.map((id) => ({
+        //           genres: {
+        //             array_contains: [id],
+        //           },
+        //         }))
+        //       : undefined,
+        // },
         // {
         //   genres:
         //     genreIds.length > 0
@@ -258,7 +304,7 @@ async function getMovieAtPosition(
 export async function getRandomMovieId(
   movieQueryOptions: MovieQueryOptions = {}
 ): Promise<number> {
-  const maxMovieId = await getLatestDatabaseMovieId();
+  const maxMovieId = await getMaxDatabaseMovieId();
   const randomKey = getRandomInt(1, maxMovieId + 1);
   let movieAtPosition = await getMovieAtPosition(
     randomKey,
