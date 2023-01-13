@@ -129,7 +129,7 @@ function GenrePicker({
 
   return (
     <div>
-      <FormControl fullWidth>
+      <FormControl variant="standard" fullWidth>
         <InputLabel id="genres-input-label">Genres</InputLabel>
         <Select
           labelId="genres-select-label"
@@ -260,7 +260,7 @@ function Home() {
                 css={css`
                   display: flex;
                   justify-content: center;
-                  margin-top: 10px;
+                  margin: 25px;
                 `}
               >
                 {currentMovieState.status === "loading" ? (
