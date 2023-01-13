@@ -132,8 +132,8 @@ export interface MovieQueryOptions {
   providerIds?: number[];
   genreIds?: number[];
   languageCodes?: string[];
-  releaseDateBefore?: Date;
-  releaseDateAfter?: Date;
+  releaseDateLte?: Date;
+  releaseDateGte?: Date;
 }
 
 export async function getMaxDatabaseMovieId(): Promise<number> {
@@ -175,8 +175,8 @@ async function getMovieAtPosition(
     providerIds = [],
     genreIds = [],
     languageCodes = [],
-    releaseDateBefore = undefined,
-    releaseDateAfter = undefined,
+    releaseDateLte = undefined,
+    releaseDateGte = undefined,
   }: MovieQueryOptions = {}
 ): Promise<Movie> {
   const movie = await prisma.movie.findMany({
@@ -193,8 +193,8 @@ async function getMovieAtPosition(
         },
         {
           release_date: {
-            lte: releaseDateBefore,
-            gte: releaseDateAfter,
+            lte: releaseDateLte,
+            gte: releaseDateGte,
           },
         },
         {
@@ -221,84 +221,10 @@ async function getMovieAtPosition(
             },
           },
         },
-        // {
-        //   OR:
-        //     providerIds.length > 0
-        //       ? providerIds.map((id) => ({
-        //           providers: {
-        //             array_contains: [id],
-        //           },
-        //         }))
-        //       : undefined,
-        // },
-        // {
-        //   OR:
-        //     genreIds.length > 0
-        //       ? genreIds.map((id) => ({
-        //           genres: {
-        //             array_contains: [id],
-        //           },
-        //         }))
-        //       : undefined,
-        // },
-        // {
-        //   genres:
-        //     genreIds.length > 0
-        //       ? {
-        //           hasSome: genreIds,
-        //         }
-        //       : undefined,
-        // },
-        // {
-        //   providers:
-        //     providerIds.length > 0
-        //       ? {
-        //           hasSome: providerIds,
-        //         }
-        //       : undefined,
-        // },
-        // {
-        //   genres:
-        //     genreIds.length > 0
-        //       ? {
-        //           hasSome: genreIds,
-        //         }
-        //       : undefined,
-        // },
       ],
     },
   });
   return movie[getRandomInt(0, movie.length)];
-  // let q = query(moviesRef, where("random", op, randomKey));
-  // if (providerIds.length > 0) {
-  //   q = query(q, where("providers", "array-contains-any", providerIds));
-  // }
-  // if (genreIds.length > 0) {
-  //   const randomGenreIndex = getRandomInt(0, genreIds.length);
-  //   const spliced = genreIds.splice(randomGenreIndex, 1);
-  //   genreIds.unshift(spliced[0]);
-  //   q = query(q, where(`genres.${genreIds[0]}`, "==", true));
-  // }
-  // if (languageCodes.length > 0) {
-  //   q = query(q, where("language", "==", languageCodes[0]));
-  // }
-  // if (releaseDateAfter) {
-  //   q = query(q, where("release_date", ">=", releaseDateAfter));
-  // }
-  // if (releaseDateBefore) {
-  //   q = query(q, where("release_date", ">=", releaseDateBefore));
-  // }
-  // q = query(q, orderBy("random"), limit(1));
-  // const snapshot = await getDocs(q);
-  // if (snapshot.empty) {
-  //   if (genreIds.length > 1) {
-  //     return getMovieAtPosition(randomKey, op, {
-  //       providerIds,
-  //       genreIds: genreIds.slice(1),
-  //       languageCodes,
-  //     });
-  //   }
-  // }
 }
 
 export async function getRandomMovieId(
