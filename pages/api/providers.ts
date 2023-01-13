@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { MovieProvider } from "../../modules/movie";
-import makeHandler from "../../modules/makeHandler";
+import makeTmdbApiHandler from "../../modules/tmdb";
 
-export default makeHandler<MovieProvider>("watch/providers/movie", {
+export default makeTmdbApiHandler<MovieProvider>("watch/providers/movie", {
   resultKey: "results",
   transformEach: (item) => {
     if (item.display_priorities.US === undefined) {

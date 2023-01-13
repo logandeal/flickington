@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { MovieGenre } from "../../modules/movie";
-import makeHandler from "../../modules/makeHandler";
+import makeTmdbApiHandler from "../../modules/tmdb";
 
-export default makeHandler<MovieGenre>("genre/movie/list", {
+export default makeTmdbApiHandler<MovieGenre>("genre/movie/list", {
   resultKey: "genres",
 });

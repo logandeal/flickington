@@ -1,6 +1,7 @@
 import prisma from "../modules/prisma";
 
 import { getRandomInt } from "./random";
+import { getTmdbUrl } from "./tmdb";
 
 export interface MovieError {
   error: string;
@@ -50,12 +51,9 @@ export class MovieNotFoundError extends Error {
 }
 
 export async function getMovieById(id: number): Promise<Movie> {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/movie/${id}?api_key=${process.env.TMDB_API_KEY}&language=en-US`,
-    {
-      cache: "no-store",
-    }
-  );
+  const response = await fetch(getTmdbUrl(`movie/${id}`), {
+    cache: "no-store",
+  });
 
   if (response.status !== 200) {
     throw new MovieNotFoundError(id);
@@ -74,12 +72,9 @@ export async function getMovieById(id: number): Promise<Movie> {
 }
 
 async function getMovieProviders(id: number) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/movie/${id}/watch/providers?api_key=${process.env.TMDB_API_KEY}&language=en-US`,
-    {
-      cache: "no-store",
-    }
-  );
+  const response = await fetch(getTmdbUrl(`movie/${id}/watch/providers`), {
+    cache: "no-store",
+  });
 
   if (response.status !== 200) {
     throw new MovieNotFoundError(id);
@@ -120,9 +115,7 @@ export async function getMovieWithProvidersById(id: number): Promise<Movie> {
 }
 
 export async function getLatestMovie(): Promise<Movie> {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/movie/latest?api_key=${process.env.TMDB_API_KEY}&language=en-US`
-  );
+  const response = await fetch(getTmdbUrl(`movie/latest`));
 
   const data = await response.json();
 
