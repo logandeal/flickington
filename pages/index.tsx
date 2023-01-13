@@ -25,6 +25,7 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Input,
   OutlinedInput,
   Chip,
   MenuItem,
@@ -120,9 +121,15 @@ function GenrePicker({
     setGenreIds(newGenreIds);
   };
 
+  const handleDelete = (genreId: number) => {
+    const newGenreIds = genreIds.filter((id) => genreId != id);
+    onChange((data || []).filter((genre) => newGenreIds.includes(genre.id)));
+    setGenreIds(newGenreIds);
+  };
+
   return (
     <div>
-      <FormControl sx={{ m: 1, width: 300 }}>
+      <FormControl fullWidth>
         <InputLabel id="genres-input-label">Genres</InputLabel>
         <Select
           labelId="genres-select-label"
@@ -130,11 +137,18 @@ function GenrePicker({
           multiple
           value={genreIds}
           onChange={handleChange}
-          input={<OutlinedInput id="select-multiple-genre" label="Genres" />}
+          input={<Input key="" id="select-multiple-genre" />}
           renderValue={(selected) => (
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
               {selected.map((value) => (
-                <Chip key={value} label={genreMap[value].name} />
+                <Chip
+                  key={value}
+                  label={genreMap[value].name}
+                  onMouseDown={(event) => {
+                    event.stopPropagation();
+                  }}
+                  onDelete={() => handleDelete(value)}
+                />
               ))}
             </Box>
           )}
@@ -359,7 +373,7 @@ export function MovieContent({ movie }: { movie: Movie }) {
         <p>Release Date: {new Date(movie.release_date).toLocaleDateString()}</p>
       )}
       {movie.genres && movie.genres.length > 0 && (
-        <p>Genre(s): {movie.genres.map((genre) => genre.name).join(", ")}</p>
+        <p>Genres: {movie.genres.map((genre) => genre.name).join(", ")}</p>
       )}
       <p>{movie.overview}</p>
       {movie.providers && movie.providers.length > 0 && (
