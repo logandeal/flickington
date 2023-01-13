@@ -138,6 +138,15 @@ export async function getMaxDatabaseMovieId(): Promise<number> {
   return aggregates._max.id || 0;
 }
 
+export async function getMinDatabaseMovieId(): Promise<number> {
+  const aggregates = await prisma.movie.aggregate({
+    _min: {
+      id: true,
+    },
+  });
+  return aggregates._min.id || 0;
+}
+
 export async function getNextDatabaseMovieId(afterId: number): Promise<number> {
   const aggregates = await prisma.movie.aggregate({
     _min: {
@@ -241,4 +250,25 @@ export async function getRandomMovieId(
     throw new MovieNotFoundError();
   }
   return movieAtPosition.id;
+}
+
+export interface MovieChange {
+  id: number;
+  adult: boolean;
+}
+
+export async function getMovieChanges(days: number): Promise<MovieChange[]> {
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const sinceYear = since.getUTCFullYear();
+  const sinceMonth = since.getUTCMonth() + 1; //months from 1-12
+  const sinceDay = since.getUTCDate();
+  const sinceString = `${sinceYear}-${String(sinceMonth).padStart(
+    2,
+    "0"
+  )}-${String(sinceDay).padStart(2, "0")}`;
+  const response = await fetch(
+    getTmdbUrl("movie/changes") + `&start_date=${sinceString}`
+  );
+  const changes = (await response.json()).results as MovieChange[];
+  return changes.filter((change) => change.adult === false);
 }

@@ -24,7 +24,7 @@ async function getRandomMovie(
   try {
     const movie = await getMovieWithProvidersById(movieId);
 
-    if (movie.adult) {
+    if (movie.adult !== false) {
       return getRandomMovie(movieQueryOptions, attemptCount + 1);
     }
 
