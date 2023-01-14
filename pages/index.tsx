@@ -32,6 +32,7 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs, { Dayjs } from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { LoadingButton, TimePicker } from "@mui/lab";
 import { QueryClient, QueryClientProvider, useQuery } from "react-query";
@@ -168,45 +169,25 @@ function GenrePicker({
   );
 }
 
-function FromYearPicker({
+function YearPicker({
   onChange,
+  label,
+  value,
 }: {
-  onChange: (fromYear: string) => void;
+  onChange: (date: Dayjs | null) => void;
+  label: string;
+  value: Dayjs | null;
 }) {
-  const [fromYear, setFromYear] = useState<string>();
   return (
     <DatePicker
       views={["year"]}
-      label="From"
-      value={fromYear}
-      maxDate="2030"
-      onChange={(newYear) => {
-        if (newYear === null) {
-          setFromYear("");
-        } else {
-          setFromYear(newYear);
-        }
-      }}
-      renderInput={(params) => (
-        <TextField {...params} helperText={null} variant="standard" />
-      )}
-    />
-  );
-}
-
-function ToYearPicker({ onChange }: { onChange: (toYear: string) => void }) {
-  const [toYear, setToYear] = useState<string>();
-  return (
-    <DatePicker
-      views={["year"]}
-      label="To"
-      value={toYear}
-      maxDate="2030"
-      onChange={(newYear) => {
-        if (newYear === null) {
-          setToYear("");
-        } else {
-          setToYear(newYear);
+      openTo="year"
+      label={label}
+      value={value}
+      maxDate={dayjs(String(new Date().getFullYear()))}
+      onChange={(date) => {
+        if (date) {
+          onChange(dayjs(String(date)));
         }
       }}
       renderInput={(params) => (
@@ -229,8 +210,12 @@ function Home() {
 
   const [providers, setProviders] = useState<MovieProvider[]>([]);
   const [genres, setGenres] = useState<MovieGenre[]>([]);
-  const [fromYear, setFromYear] = useState<string>();
-  const [toYear, setToYear] = useState<string>();
+  const [fromYear, setFromYear] = useState<Dayjs | null>(
+    dayjs(String(new Date().getFullYear() - 10))
+  );
+  const [toYear, setToYear] = useState<Dayjs | null>(
+    dayjs(String(new Date().getFullYear()))
+  );
 
   async function loadRandomMovie() {
     setCurrentMovieState((state) => ({ ...state, status: "loading" }));
@@ -242,6 +227,8 @@ function Home() {
               .map((provider) => provider.provider_id)
               .join(","),
             genres: genres.map((genre) => genre.id).join(","),
+            release_date_gte: fromYear ? `${fromYear.get("year")}-01-01` : "",
+            release_date_lte: toYear ? `${toYear.get("year")}-12-31` : "",
           })
       );
       setCurrentMovieState({
@@ -310,10 +297,18 @@ function Home() {
                   <Grid container columnSpacing={4}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <Grid item>
-                        <FromYearPicker onChange={setFromYear} />
+                        <YearPicker
+                          onChange={setFromYear}
+                          label="From"
+                          value={fromYear}
+                        />
                       </Grid>
                       <Grid item>
-                        <ToYearPicker onChange={setToYear} />
+                        <YearPicker
+                          onChange={setToYear}
+                          label="To"
+                          value={toYear}
+                        />
                       </Grid>
                     </LocalizationProvider>
                   </Grid>
@@ -441,8 +436,8 @@ export function MovieContent({ movie }: { movie: Movie }) {
       <p>{movie.overview}</p>
       {movie.providers && movie.providers.length > 0 && (
         <ul>
-          {movie.providers.map((provider) => (
-            <li key={provider.provider_id}>
+          {movie.providers.map((provider, index) => (
+            <li key={index}>
               {provider.provider_name} ({provider.type}):{" "}
               <img src={provider.logo_path} height="30" width="30" />
             </li>
