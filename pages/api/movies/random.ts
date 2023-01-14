@@ -78,7 +78,7 @@ export default async function handler(
   const releaseDateLte = releaseDateLteString
     ? new Date(releaseDateLteString)
     : undefined;
-  const releaseDateGteString = arrayify(req.query.release_date_after)[0] ?? "";
+  const releaseDateGteString = arrayify(req.query.release_date_gte)[0] ?? "";
   const releaseDateGte = releaseDateGteString
     ? new Date(releaseDateGteString)
     : undefined;
