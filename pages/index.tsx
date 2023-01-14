@@ -282,7 +282,7 @@ function Home() {
                 color="text.secondary"
                 sx={{ textAlign: "center" }}
               >
-                Find your next movie to watch!
+                Find your next movie now!
               </Typography>
               <div
                 css={css`
@@ -323,7 +323,7 @@ function Home() {
               >
                 {currentMovieState.status === "loading" ? (
                   <LoadingButton loading variant="contained">
-                    Reveal Movie
+                    Give Me a Movie
                   </LoadingButton>
                 ) : (
                   <Button
@@ -332,7 +332,7 @@ function Home() {
                       loadRandomMovie();
                     }}
                   >
-                    Reveal Movie
+                    Give Me a Movie
                   </Button>
                 )}
               </div>
