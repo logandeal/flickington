@@ -36,6 +36,9 @@ export interface Movie extends MovieStub {
   release_date?: string;
   tagline?: string;
   providers: MovieProvider[];
+  popularity: number;
+  vote_average: number;
+  vote_count: number;
 }
 
 export class MovieNotFoundError extends Error {
@@ -68,6 +71,9 @@ export async function getMovieById(id: number): Promise<Movie> {
     poster_path:
       data.poster_path &&
       `https://image.tmdb.org/t/p/w188_and_h282_bestv2${data.poster_path}`,
+    popularity: data.popularity || 0,
+    vote_count: data.vote_count || 0,
+    vote_average: data.vote_average || 0,
   };
 }
 
@@ -271,4 +277,12 @@ export async function getMovieChanges(days: number): Promise<MovieChange[]> {
   );
   const changes = (await response.json()).results as MovieChange[];
   return changes.filter((change) => change.adult === false);
+}
+
+export function isValidProviderType(providerType: string) {
+  return ["flatrate", "ads", "free"].includes(providerType);
+}
+
+export function isValidProvider(provider: MovieProvider) {
+  return isValidProviderType(provider.type);
 }

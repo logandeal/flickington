@@ -15,8 +15,11 @@ model movie {
   title        String
   release_date DateTime?
   language     String
+  popularity   Float
+  vote_count   Int
+  vote_average Float
   searches     movie_search[]
-  @@index([language, release_date])
+  @@index([language, release_date, popularity, vote_count, vote_average])
 }
 
 model movie_search {

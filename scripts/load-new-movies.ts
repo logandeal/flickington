@@ -17,7 +17,7 @@ program
   .option("-s, --start <number>", "Movie ID to start at", parseNumberOption)
   .option("-e, --end <number>", "Movie ID to end at", parseNumberOption)
   .option("-d, --days <number>", "Days of changes", parseNumberOption)
-  .option("-db", "Write results to database")
+  .option("--db", "Write results to database")
   .option(
     "-r, --random <number>",
     "Sample number of random IDs",
@@ -39,6 +39,7 @@ import {
   getMovieChanges,
   getMinDatabaseMovieId,
   Movie,
+  isValidProvider,
 } from "../modules/movie";
 import { getRandomIntSetInRange } from "../modules/random";
 
@@ -54,9 +55,7 @@ function getMovieData(movie: Movie) {
   if (movie.providers.length === 0 || movie.genres.length === 0) {
     return undefined;
   }
-  const providers = movie.providers.filter(
-    (provider) => provider.type === "flatrate" || provider.type === "ads"
-  );
+  const providers = movie.providers.filter(isValidProvider);
   const providerIds = Array.from(
     new Set(providers.map((provider) => provider.provider_id))
   );
@@ -75,6 +74,9 @@ function getMovieData(movie: Movie) {
     title: movie.title || "",
     release_date: movie.release_date ? new Date(movie.release_date) : null,
     language: movie.original_language || "",
+    popularity: movie.popularity || 0,
+    vote_average: movie.vote_average || 0,
+    vote_count: movie.vote_count || 0,
     searches: {
       create: combos,
     },
