@@ -2,7 +2,8 @@ const dotenv = require("dotenv");
 dotenv.config();
 dotenv.config({ path: `.env.local`, override: true });
 
-import commander, { program } from "commander";
+import fs from "fs";
+import commander, { Option, program } from "commander";
 
 function parseNumberOption(value: string): number {
   const parsedValue = parseInt(value, 10);
@@ -15,7 +16,14 @@ function parseNumberOption(value: string): number {
 program
   .option("-s, --start <number>", "Movie ID to start at", parseNumberOption)
   .option("-e, --end <number>", "Movie ID to end at", parseNumberOption)
-  .option("-d, --days <number>", "Days of changes", parseNumberOption);
+  .option("-d, --days <number>", "Days of changes", parseNumberOption)
+  .option("-db", "Write results to database")
+  .option(
+    "-r, --random <number>",
+    "Sample number of random IDs",
+    parseNumberOption
+  )
+  .option("-f, --file <string>", "File name to output");
 
 program.parse();
 
@@ -32,6 +40,7 @@ import {
   getMinDatabaseMovieId,
   Movie,
 } from "../modules/movie";
+import { getRandomIntSetInRange } from "../modules/random";
 
 async function delay(ms: number): Promise<number> {
   return new Promise((resolve) => {
@@ -76,7 +85,14 @@ async function loadNewMovies() {
   const maxMovieId = await getMaxDatabaseMovieId();
   const minMovieId = maxMovieId ? await getMinDatabaseMovieId() : 0;
 
-  if (program.opts().days && maxMovieId) {
+  const shouldWriteToDb = program.opts().db;
+
+  if (!shouldWriteToDb && !program.opts().file) {
+    console.warn(`You must write to a db or file.`);
+    return;
+  }
+
+  if (program.opts().days && maxMovieId && shouldWriteToDb) {
     const changes = await getMovieChanges(program.opts().days);
     const relevantChanges = changes.filter(
       (change) => change.id >= minMovieId && change.id <= maxMovieId
@@ -137,7 +153,7 @@ async function loadNewMovies() {
     console.info(`Updated ${movieChangedCount} movies.`);
   }
 
-  if (program.opts().start) {
+  if (program.opts().start && shouldWriteToDb) {
     const doesStartMovieExist = await doesDatabaseMovieExist(
       program.opts().start
     );
@@ -149,30 +165,63 @@ async function loadNewMovies() {
       return;
     }
   }
+
+  if (!shouldWriteToDb) {
+    if (!program.opts().start) {
+      console.warn(`Please choose a starting movie ID.`);
+      return;
+    }
+  }
+
   const startMovieId = program.opts().start
     ? program.opts().start
     : maxMovieId + 1;
   const latestMovie = await getLatestMovie();
-  const nextDatabaseMovieId = await getNextDatabaseMovieId(startMovieId);
+  const nextDatabaseMovieId = shouldWriteToDb
+    ? await getNextDatabaseMovieId(startMovieId)
+    : latestMovie.id + 1;
   const endMovieId = program.opts().end
     ? Math.min(program.opts().end, latestMovie.id, nextDatabaseMovieId - 1)
     : Math.min(latestMovie.id, nextDatabaseMovieId - 1);
   let movieAddedCount = 0;
-  const movieLoad = await prisma.movie_load.create({
-    data: {
-      type: "load_span",
-      start_id: startMovieId,
-      end_id: endMovieId,
-    },
-  });
+  const movieLoad = shouldWriteToDb
+    ? await prisma.movie_load.create({
+        data: {
+          type: "load_span",
+          start_id: startMovieId,
+          end_id: endMovieId,
+        },
+      })
+    : { id: 0 };
+  if (program.opts().file) {
+    fs.writeFileSync(program.opts().file, "[\n");
+  }
+  const randomSet = program.opts().random
+    ? getRandomIntSetInRange(
+        startMovieId,
+        endMovieId + 1,
+        program.opts().random
+      )
+    : new Set();
   for (let movieId = startMovieId; movieId <= endMovieId; movieId++) {
+    if (randomSet.size > 0 && !randomSet.has(movieId)) {
+      continue;
+    }
     const beginTime = Date.now();
     try {
       const movie = await getMovieWithProvidersById(movieId);
       const data = getMovieData(movie);
       if (data) {
-        await prisma.movie.create({ data });
-        console.info(`Uploaded ${movie.id}: ${movie.title}`);
+        if (shouldWriteToDb) {
+          await prisma.movie.create({ data });
+        }
+        if (program.opts().file) {
+          fs.appendFileSync(
+            program.opts().file,
+            (movieAddedCount > 0 ? ",\n" : "") + JSON.stringify(movie)
+          );
+        }
+        console.info(`Loaded ${movie.id}: ${movie.title}`);
         movieAddedCount++;
       }
     } catch (e) {
@@ -186,14 +235,22 @@ async function loadNewMovies() {
     const remainingTimeInMs = waitTimeInMs - delta;
     await delay(remainingTimeInMs);
   }
-  await prisma.movie_load.update({
-    where: {
-      id: movieLoad.id,
-    },
-    data: {
-      completed_count: movieAddedCount,
-    },
-  });
+  if (program.opts().file) {
+    fs.appendFileSync(
+      program.opts().file,
+      (movieAddedCount > 0 ? "\n" : "") + "]\n"
+    );
+  }
+  if (shouldWriteToDb) {
+    await prisma.movie_load.update({
+      where: {
+        id: movieLoad.id,
+      },
+      data: {
+        completed_count: movieAddedCount,
+      },
+    });
+  }
   console.info(`Loaded ${movieAddedCount} movies.`);
 }
 
