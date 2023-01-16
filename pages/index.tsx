@@ -110,12 +110,16 @@ const MenuProps = {
   },
 };
 
+function getGenrePairString(genre: MovieGenre) {
+  return "" + genre.id + (genre.pair_id ? `:${genre.pair_id}` : "");
+}
+
 function GenrePicker({
   onChange,
 }: {
   onChange: (genres: MovieGenre[]) => void;
 }) {
-  const [genreIds, setGenreIds] = useState<number[]>([]);
+  const [genrePairs, setGenrePairs] = useState<string[]>([]);
 
   const { isLoading, error, data } = useQuery<MovieGenre[], Error>(
     "genreData",
@@ -123,26 +127,35 @@ function GenrePicker({
   );
 
   const genreMap = useMemo(() => {
-    return Object.fromEntries((data || []).map((genre) => [genre.id, genre]));
+    return Object.fromEntries(
+      (data || []).map((genre) => [getGenrePairString(genre), genre])
+    );
   }, [data]);
 
   if (error) return <>An error has occurred: {error.message}</>;
 
-  const handleChange = (event: SelectChangeEvent<typeof genreIds>) => {
+  const handleChange = (event: SelectChangeEvent<typeof genrePairs>) => {
     const {
       target: { value },
     } = event;
     // On autofill we get a stringified value.
-    const newGenreIds =
-      typeof value === "string" ? value.split(",").map(Number) : value;
-    onChange((data || []).filter((genre) => newGenreIds.includes(genre.id)));
-    setGenreIds(newGenreIds);
+    const newGenrePairs = typeof value === "string" ? value.split(",") : value;
+    onChange(
+      (data || []).filter((genre) =>
+        newGenrePairs.includes(getGenrePairString(genre))
+      )
+    );
+    setGenrePairs(newGenrePairs);
   };
 
-  const handleDelete = (genreId: number) => {
-    const newGenreIds = genreIds.filter((id) => genreId != id);
-    onChange((data || []).filter((genre) => newGenreIds.includes(genre.id)));
-    setGenreIds(newGenreIds);
+  const handleDelete = (genrePair: string) => {
+    const newGenrePairs = genrePairs.filter((pair) => genrePair != pair);
+    onChange(
+      (data || []).filter((genre) =>
+        newGenrePairs.includes(getGenrePairString(genre))
+      )
+    );
+    setGenrePairs(newGenrePairs);
   };
 
   return (
@@ -153,7 +166,7 @@ function GenrePicker({
           labelId="genres-select-label"
           id="genres-select"
           multiple
-          value={genreIds}
+          value={genrePairs}
           onChange={handleChange}
           input={<Input key="" id="select-multiple-genre" />}
           renderValue={(selected) => (
@@ -173,7 +186,10 @@ function GenrePicker({
           MenuProps={MenuProps}
         >
           {(data || []).map((genre) => (
-            <MenuItem key={genre.id} value={genre.id}>
+            <MenuItem
+              key={getGenrePairString(genre)}
+              value={getGenrePairString(genre)}
+            >
               {genre.name}
             </MenuItem>
           ))}
@@ -242,7 +258,7 @@ function Home() {
             providers: providers
               .map((provider) => provider.provider_id)
               .join(","),
-            genres: genres.map((genre) => genre.id).join(","),
+            genres: genres.map((genre) => getGenrePairString(genre)).join(","),
             release_date_gte: fromYear ? `${fromYear.get("year")}-01-01` : "",
             release_date_lte: toYear ? `${toYear.get("year")}-12-31` : "",
             language_codes: "en",

@@ -11,6 +11,7 @@ export interface MovieError {
 export interface MovieGenre {
   id: number;
   name: string;
+  pair_id?: number;
 }
 
 export interface MovieProvider {
