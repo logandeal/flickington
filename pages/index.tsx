@@ -29,6 +29,7 @@ import {
   OutlinedInput,
   Chip,
   MenuItem,
+  IconButton,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -38,6 +39,10 @@ import { LoadingButton, TimePicker } from "@mui/lab";
 import { QueryClient, QueryClientProvider, useQuery } from "react-query";
 import { Movie, MovieGenre, MovieProvider } from "../modules/movie";
 import { useMemo, useState } from "react";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -208,6 +213,8 @@ function Home() {
     error: null,
   });
 
+  const [maybeListOpen, setMaybeListOpen] = useState<Boolean>(false);
+  const [maybeList, setMaybeList] = useState<Number[]>([]);
   const [providers, setProviders] = useState<MovieProvider[]>([]);
   const [genres, setGenres] = useState<MovieGenre[]>([]);
   const [fromYear, setFromYear] = useState<Dayjs | null>(
@@ -229,6 +236,7 @@ function Home() {
             genres: genres.map((genre) => genre.id).join(","),
             release_date_gte: fromYear ? `${fromYear.get("year")}-01-01` : "",
             release_date_lte: toYear ? `${toYear.get("year")}-12-31` : "",
+            language_codes: "en",
           })
       );
       setCurrentMovieState({
@@ -275,6 +283,35 @@ function Home() {
             // flex-direction: column;
           `}
         >
+          <div
+            css={css`
+              display: flex;
+              justify-content: center;
+              margin: 10px;
+            `}
+          >
+            {maybeList.length > 0 && maybeListOpen && (
+              <Card sx={{ margin: "auto" }}>
+                <div
+                  css={css`
+                    display: flex;
+                    margin: 10px;
+                  `}
+                >
+                  <MaybeListButton
+                    maybeListOpen={maybeListOpen}
+                    setMaybeListOpen={setMaybeListOpen}
+                  />
+                </div>
+              </Card>
+            )}
+            {maybeList.length > 0 && !maybeListOpen && (
+              <MaybeListButton
+                maybeListOpen={maybeListOpen}
+                setMaybeListOpen={setMaybeListOpen}
+              />
+            )}
+          </div>
           <Card sx={{ margin: "auto", maxWidth: 600 }}>
             <CardContent>
               <Typography
@@ -344,6 +381,8 @@ function Home() {
                 <MovieContentOrError
                   movie={currentMovieState.movie}
                   error={currentMovieState.error}
+                  maybeList={maybeList}
+                  setMaybeList={setMaybeList}
                 />
               </div>
             </CardContent>
@@ -387,9 +426,13 @@ function Home() {
 export function MovieContentOrError({
   movie,
   error,
+  maybeList,
+  setMaybeList,
 }: {
   movie: Movie | null;
   error: Error | null;
+  maybeList: Number[];
+  setMaybeList: Function;
 }) {
   if (error) {
     return <>Error loading movie: {error.message}</>;
@@ -397,10 +440,50 @@ export function MovieContentOrError({
   if (!movie) {
     return null;
   }
-  return <MovieContent key={movie.id} movie={movie} />;
+  return (
+    <MovieContent
+      key={movie.id}
+      movie={movie}
+      maybeList={maybeList}
+      setMaybeList={setMaybeList}
+    />
+  );
 }
 
-export function MovieContent({ movie }: { movie: Movie }) {
+export function MaybeListButton({
+  maybeListOpen,
+  setMaybeListOpen,
+}: {
+  maybeListOpen: Boolean;
+  setMaybeListOpen: Function;
+}) {
+  return (
+    <>
+      <Button
+        id="maybeListButton"
+        variant="contained"
+        endIcon={
+          maybeListOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />
+        }
+        onClick={() => {
+          maybeListOpen ? setMaybeListOpen(false) : setMaybeListOpen(true);
+        }}
+      >
+        Maybe List
+      </Button>
+    </>
+  );
+}
+
+export function MovieContent({
+  movie,
+  maybeList,
+  setMaybeList,
+}: {
+  movie: Movie;
+  maybeList: Number[];
+  setMaybeList: Function;
+}) {
   const [moviePosterLoading, setMoviePosterLoading] = useState(
     movie.poster_path ? 1 : 0
   );
@@ -444,6 +527,24 @@ export function MovieContent({ movie }: { movie: Movie }) {
           ))}
         </ul>
       )}
+      <div
+        css={css`
+          display: flex;
+          justify-content: center;
+          margin-top: 10px;
+        `}
+      >
+        {movie.title && (
+          <Button
+            variant="contained"
+            onClick={() => {
+              setMaybeList(maybeList.concat(movie.id));
+            }}
+          >
+            Maybe
+          </Button>
+        )}
+      </div>
     </>
   );
 }
