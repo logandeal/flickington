@@ -130,7 +130,7 @@ export async function getLatestMovie(): Promise<Movie> {
 }
 export interface MovieQueryOptions {
   providerIds?: number[];
-  genreIds?: number[];
+  genrePairs?: number[][];
   languageCodes?: string[];
   releaseDateLte?: Date;
   releaseDateGte?: Date;
@@ -182,7 +182,7 @@ async function getMovieAtPosition(
   op: string,
   {
     providerIds = [],
-    genreIds = [],
+    genrePairs = [],
     languageCodes = [],
     releaseDateLte = undefined,
     releaseDateGte = undefined,
@@ -222,9 +222,12 @@ async function getMovieAtPosition(
           searches: {
             some: {
               OR:
-                genreIds.length > 0
-                  ? genreIds.map((id) => ({
-                      genre: id,
+                genrePairs.length > 0
+                  ? genrePairs.map((pair) => ({
+                      AND: [
+                        { genre: pair[0] || 0 },
+                        { genre_pair: pair[1] || 0 },
+                      ],
                     }))
                   : undefined,
             },

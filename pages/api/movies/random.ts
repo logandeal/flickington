@@ -70,8 +70,8 @@ export default async function handler(
   const providerIds = getCommaSeparatedParameterValues(req.query.providers).map(
     Number
   );
-  const genreIds = getCommaSeparatedParameterValues(req.query.genres).map(
-    Number
+  const genrePairs = getCommaSeparatedParameterValues(req.query.genres).map(
+    (genreKey) => genreKey.split(":").map(Number)
   );
   const languageCodes = getCommaSeparatedParameterValues(req.query.languages);
   const releaseDateLteString = arrayify(req.query.release_date_lte)[0] ?? "";
@@ -85,7 +85,7 @@ export default async function handler(
   try {
     const movie = await getRandomMovie({
       providerIds,
-      genreIds,
+      genrePairs,
       languageCodes,
       releaseDateGte: releaseDateGte,
       releaseDateLte: releaseDateLte,
