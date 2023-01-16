@@ -109,7 +109,9 @@ async function loadNewMovies() {
     const relevantChanges = changes.filter(
       (change) => change.id >= minMovieId && change.id <= maxMovieId
     );
-    console.info(`${relevantChanges.length} movies have changed.`);
+    console.info(
+      `${relevantChanges.length} movies in database ID range have changed.`
+    );
     let movieChangedCount = 0;
     const movieLoad = await prisma.movie_load.create({
       data: {
@@ -118,6 +120,7 @@ async function loadNewMovies() {
         end_id: maxMovieId,
       },
     });
+    console.info(`Checking for relevant changes...`);
     for (const change of relevantChanges) {
       const beginTime = Date.now();
       try {
@@ -133,10 +136,7 @@ async function loadNewMovies() {
             });
           } catch (e) {
             // Assume that the movie didn't exist and needs to be created.
-            await prisma.movie.insert({
-              where: {
-                id: movie.id,
-              },
+            await prisma.movie.create({
               data,
             });
           }
@@ -215,17 +215,36 @@ async function loadNewMovies() {
         program.opts().random
       )
     : new Set();
+
+  console.info(
+    `Loading movies in ID range from ${startMovieId} to ${endMovieId}.`
+  );
+  if (randomSet.size > 0) {
+    console.info(`Sampling ${randomSet.size} IDs in that range.`);
+  }
+
+  let elapsedApiTime = 0;
+  let elapsedDbTime = 0;
+
+  let movieApiCount = 0;
+
   for (let movieId = startMovieId; movieId <= endMovieId; movieId++) {
     if (randomSet.size > 0 && !randomSet.has(movieId)) {
       continue;
     }
+    movieApiCount++;
     const beginTime = Date.now();
     try {
       const movie = await getMovieWithProvidersById(movieId);
+      const endApiTime = Date.now();
+      elapsedApiTime = elapsedApiTime + (endApiTime - beginTime);
       const data = getMovieData(movie);
       if (data) {
         if (shouldWriteToDb) {
+          const beginDbTime = Date.now();
           await prisma.movie.create({ data });
+          const endDbTime = Date.now();
+          elapsedDbTime = elapsedDbTime + (endDbTime - beginDbTime);
         }
         if (program.opts().file) {
           fs.appendFileSync(
@@ -264,6 +283,16 @@ async function loadNewMovies() {
     });
   }
   console.info(`Loaded ${movieAddedCount} movies.`);
+  console.info(
+    `Elapsed API time: ${Math.round(elapsedApiTime / 10) / 100}s (${
+      Math.round(elapsedApiTime / movieApiCount / 10) / 100
+    }s per ID)`
+  );
+  console.info(
+    `Elapsed DB time: ${Math.round(elapsedDbTime / 10) / 100}s (${
+      Math.round(elapsedDbTime / movieAddedCount / 10) / 100
+    }s per movie)`
+  );
 }
 
 loadNewMovies();
