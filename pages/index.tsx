@@ -37,7 +37,7 @@ import dayjs, { Dayjs } from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { LoadingButton, TimePicker } from "@mui/lab";
 import { QueryClient, QueryClientProvider, useQuery } from "react-query";
-import { Movie, MovieGenre, MovieProvider } from "../modules/movie";
+import { Movie, MovieError, MovieGenre, MovieProvider } from "../modules/movie";
 import { useMemo, useState } from "react";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -56,6 +56,12 @@ export default function App() {
   );
 }
 
+function sortProviders(providers: MovieProvider[]) {
+  return [...providers].sort((a, b) =>
+    a.provider_name.localeCompare(b.provider_name)
+  );
+}
+
 function ProviderPicker({
   onChange,
 }: {
@@ -63,7 +69,10 @@ function ProviderPicker({
 }) {
   const { isLoading, error, data } = useQuery<MovieProvider[], Error>(
     "providerData",
-    () => fetch("/api/providers").then((res) => res.json())
+    () =>
+      fetch("/api/providers")
+        .then((res) => res.json())
+        .then(sortProviders)
   );
 
   if (error) return <>An error has occurred: {error.message}</>;
@@ -206,7 +215,7 @@ function Home() {
   const [currentMovieState, setCurrentMovieState] = useState<{
     status: string;
     movie: Movie | null;
-    error: Error | null;
+    error: MovieError | Error | null;
   }>({
     status: "initial",
     movie: null,
@@ -239,9 +248,18 @@ function Home() {
             language_codes: "en",
           })
       );
+      const movie = await res.json();
+      if (movie.error) {
+        setCurrentMovieState({
+          status: "error",
+          movie: null,
+          error: movie,
+        });
+        return;
+      }
       setCurrentMovieState({
         status: "loaded",
-        movie: await res.json(),
+        movie,
         error: null,
       });
     } catch (e) {
@@ -430,11 +448,19 @@ export function MovieContentOrError({
   setMaybeList,
 }: {
   movie: Movie | null;
-  error: Error | null;
+  error: Error | MovieError | null;
   maybeList: Number[];
   setMaybeList: Function;
 }) {
   if (error) {
+    if ("error" in error && error.error === "movie_not_found") {
+      return (
+        <>
+          Well, darn! We couldn&apos;t find a movie! Maybe try different
+          options?
+        </>
+      );
+    }
     return <>Error loading movie: {error.message}</>;
   }
   if (!movie) {
@@ -488,6 +514,8 @@ export function MovieContent({
     movie.poster_path ? 1 : 0
   );
 
+  const providers = sortProviders(movie.providers || []);
+
   return (
     <>
       {moviePosterLoading ? (
@@ -517,9 +545,9 @@ export function MovieContent({
         <p>Genres: {movie.genres.map((genre) => genre.name).join(", ")}</p>
       )}
       <p>{movie.overview}</p>
-      {movie.providers && movie.providers.length > 0 && (
+      {providers.length > 0 && (
         <ul>
-          {movie.providers.map((provider, index) => (
+          {providers.map((provider, index) => (
             <li key={index}>
               {provider.provider_name} ({provider.type}):{" "}
               <img src={provider.logo_path} height="30" width="30" />

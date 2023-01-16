@@ -95,6 +95,7 @@ export default async function handler(
     if (e instanceof MovieNotFoundError) {
       return res.status(404).json({
         error: "movie_not_found",
+        message: "No movie found with that criteria.",
       });
     }
     throw e;

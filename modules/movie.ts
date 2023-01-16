@@ -5,6 +5,7 @@ import { getTmdbUrl } from "./tmdb";
 
 export interface MovieError {
   error: string;
+  message: string;
 }
 
 export interface MovieGenre {
