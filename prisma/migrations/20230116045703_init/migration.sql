@@ -23,6 +23,7 @@ CREATE TABLE `movie_search` (
     `genre_pair` INTEGER NOT NULL,
     `provider` INTEGER NOT NULL,
 
+    INDEX `movie_search_movie_id_idx`(`movie_id`),
     INDEX `movie_search_genre_genre_pair_idx`(`genre`, `genre_pair`),
     INDEX `movie_search_provider_genre_genre_pair_idx`(`provider`, `genre`, `genre_pair`),
     PRIMARY KEY (`id`)
@@ -40,6 +41,3 @@ CREATE TABLE `movie_load` (
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- AddForeignKey
-ALTER TABLE `movie_search` ADD CONSTRAINT `movie_search_movie_id_fkey` FOREIGN KEY (`movie_id`) REFERENCES `movie`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

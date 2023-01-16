@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
 }
 
 model movie {
@@ -32,6 +33,7 @@ model movie_search {
   genre        Int
   genre_pair   Int
   provider     Int
+  @@index([movie_id])
   @@index([genre, genre_pair])
   @@index([provider, genre, genre_pair])
 }
