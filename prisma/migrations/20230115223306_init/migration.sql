@@ -8,7 +8,10 @@ CREATE TABLE `movie` (
     `vote_count` INTEGER NOT NULL,
     `vote_average` DOUBLE NOT NULL,
 
-    INDEX `movie_language_release_date_popularity_vote_count_vote_avera_idx`(`language`, `release_date`, `popularity`, `vote_count`, `vote_average`),
+    INDEX `movie_language_idx`(`language`),
+    INDEX `movie_release_date_language_idx`(`release_date`, `language`),
+    INDEX `movie_popularity_idx`(`popularity`),
+    INDEX `movie_vote_count_vote_average_idx`(`vote_count`, `vote_average`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -17,10 +20,11 @@ CREATE TABLE `movie_search` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `movie_id` INTEGER NOT NULL,
     `genre` INTEGER NOT NULL,
+    `genre_pair` INTEGER NOT NULL,
     `provider` INTEGER NOT NULL,
 
-    INDEX `movie_search_genre_provider_idx`(`genre`, `provider`),
-    INDEX `movie_search_movie_id_genre_provider_idx`(`movie_id`, `genre`, `provider`),
+    INDEX `movie_search_genre_genre_pair_idx`(`genre`, `genre_pair`),
+    INDEX `movie_search_provider_genre_genre_pair_idx`(`provider`, `genre`, `genre_pair`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

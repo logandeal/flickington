@@ -40,6 +40,7 @@ import {
   getMinDatabaseMovieId,
   Movie,
   isValidProvider,
+  getGenrePairs,
 } from "../modules/movie";
 import { getRandomIntSetInRange } from "../modules/random";
 
@@ -62,10 +63,19 @@ function getMovieData(movie: Movie) {
   const genreIds = Array.from(new Set(movie.genres.map((genre) => genre.id)));
   const combos = providerIds
     .map((providerId) =>
-      genreIds.map((genreId) => ({
-        provider: providerId,
-        genre: genreId,
-      }))
+      genreIds
+        .map((genreId) => ({
+          provider: providerId,
+          genre: genreId,
+          genre_pair: 0,
+        }))
+        .concat(
+          getGenrePairs(movie).map((pair) => ({
+            provider: providerId,
+            genre: pair[0],
+            genre_pair: pair[1],
+          }))
+        )
     )
     .flat();
 

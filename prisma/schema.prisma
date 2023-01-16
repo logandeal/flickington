@@ -19,7 +19,10 @@ model movie {
   vote_count   Int
   vote_average Float
   searches     movie_search[]
-  @@index([language, release_date, popularity, vote_count, vote_average])
+  @@index([language])
+  @@index([release_date, language])
+  @@index([popularity])
+  @@index([vote_count, vote_average])
 }
 
 model movie_search {
@@ -27,9 +30,10 @@ model movie_search {
   movie        movie     @relation(fields: [movie_id], references: [id])
   movie_id     Int
   genre        Int
+  genre_pair   Int
   provider     Int
-  @@index([genre, provider])
-  @@index([movie_id, genre, provider])
+  @@index([genre, genre_pair])
+  @@index([provider, genre, genre_pair])
 }
 
 model movie_load {
