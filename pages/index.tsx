@@ -38,7 +38,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { LoadingButton, TimePicker } from "@mui/lab";
 import { QueryClient, QueryClientProvider, useQuery } from "react-query";
 import { Movie, MovieError, MovieGenre, MovieProvider } from "../modules/movie";
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
@@ -239,7 +239,7 @@ function Home() {
   });
 
   const [maybeListOpen, setMaybeListOpen] = useState<Boolean>(false);
-  const [maybeList, setMaybeList] = useState<Number[]>([]);
+  const [maybeList, setMaybeList] = useState<(Movie | Number)[]>([]);
   const [providers, setProviders] = useState<MovieProvider[]>([]);
   const [genres, setGenres] = useState<MovieGenre[]>([]);
   const [fromYear, setFromYear] = useState<Dayjs | null>(
@@ -287,6 +287,43 @@ function Home() {
     }
   }
 
+  const movieMaybeList = maybeList.filter(
+    (item) => typeof item !== "number"
+  ) as Movie[];
+  const maybeListComponents = movieMaybeList.map((movie, currentIndex) => (
+    <>
+      <React.Fragment key={currentIndex}>
+        <div
+          css={css`
+            display: flex-box;
+            justify-content: center;
+            text-align: center;
+            margin-top: 20px;
+          `}
+        >
+          {movie.poster_path && (
+            <img
+              id={"posterImageMaybeList" + currentIndex.toString()}
+              src={movie.poster_path}
+              height="0"
+              width="0"
+              onLoad={() => {
+                var thisImg = document.getElementById(
+                  "posterImageMaybeList" + currentIndex.toString()
+                );
+                if (thisImg != null) {
+                  thisImg.setAttribute("width", "91");
+                  thisImg.setAttribute("height", "141");
+                }
+              }}
+            />
+          )}
+          <h3>{movie.title}</h3>
+        </div>
+      </React.Fragment>
+    </>
+  ));
+
   return (
     <>
       <Head>
@@ -325,18 +362,24 @@ function Home() {
             `}
           >
             {maybeList.length > 0 && maybeListOpen && (
-              <Card sx={{ margin: "auto" }}>
-                <div
-                  css={css`
-                    display: flex;
-                    margin: 10px;
-                  `}
+              <Card
+                sx={{
+                  margin: "auto",
+                  maxWidth: 600,
+                  textAlign: "center",
+                }}
+              >
+                <CardContent
+                  sx={{
+                    mb: -2,
+                  }}
                 >
                   <MaybeListButton
                     maybeListOpen={maybeListOpen}
                     setMaybeListOpen={setMaybeListOpen}
                   />
-                </div>
+                  {maybeListComponents}
+                </CardContent>
               </Card>
             )}
             {maybeList.length > 0 && !maybeListOpen && (
@@ -464,8 +507,8 @@ export function MovieContentOrError({
   setMaybeList,
 }: {
   movie: Movie | null;
-  error: Error | MovieError | null;
-  maybeList: Number[];
+  error: MovieError | Error | null;
+  maybeList: (Movie | Number)[];
   setMaybeList: Function;
 }) {
   if (error) {
@@ -523,12 +566,13 @@ export function MovieContent({
   setMaybeList,
 }: {
   movie: Movie;
-  maybeList: Number[];
+  maybeList: (Movie | Number)[];
   setMaybeList: Function;
 }) {
   const [moviePosterLoading, setMoviePosterLoading] = useState(
     movie.poster_path ? 1 : 0
   );
+  const [maybeButtonHit, setMaybeButtonHit] = useState(0);
 
   const providers = sortProviders(movie.providers || []);
 
@@ -582,10 +626,16 @@ export function MovieContent({
           <Button
             variant="contained"
             onClick={() => {
-              setMaybeList(maybeList.concat(movie.id));
+              if (!maybeButtonHit && !maybeList.includes(movie.id)) {
+                console.log(maybeList);
+                setMaybeList(maybeList.concat(movie.id, movie));
+                setMaybeButtonHit(1);
+              }
             }}
           >
-            Maybe
+            {maybeButtonHit || maybeList.includes(movie.id)
+              ? "Added to Maybe List"
+              : "Maybe"}
           </Button>
         )}
       </div>

@@ -15,6 +15,12 @@ import {
 
 const MAX_ATTEMPT_COUNT = 25;
 
+// array
+// pass array
+// if it hits one in array go again
+// max 5
+// fake button
+
 async function getRandomMovie(
   movieQueryOptions: MovieQueryOptions = {},
   attemptCount: number = 0
