@@ -106,7 +106,8 @@ const appenders: Record<string, Appender> = {
 
 export async function getMovieById(
   id: number,
-  append: string[] = []
+  append: string[] = [],
+  waitMs: number = 0
 ): Promise<Movie> {
   const response = await fetch(
     getTmdbUrl(`movie/${id}`, {
@@ -119,6 +120,15 @@ export async function getMovieById(
 
   if (response.status === 404) {
     throw new MovieNotFoundError(id);
+  }
+
+  if (response.status === 503) {
+    if (waitMs / 1000 / 60 >= 10) {
+      console.error(response);
+      throw new Error(`Too many 503 errors.`);
+    }
+    const nextWaitMs = waitMs > 0 ? waitMs * 2 : 100;
+    return getMovieById(id, append, nextWaitMs);
   }
 
   if (response.status !== 200) {

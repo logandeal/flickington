@@ -53,12 +53,7 @@ import {
   getMovieById,
 } from "../modules/movie";
 import { getRandomIntSetInRange } from "../modules/random";
-
-async function delay(ms: number): Promise<number> {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(ms), ms >= 0 ? ms : 0);
-  });
-}
+import { delay } from "../modules/time";
 
 const MOVIE_REQUESTS_PER_SECOND = 10;
 
