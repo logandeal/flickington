@@ -127,7 +127,7 @@ export async function getMovieById(
       console.error(response);
       throw new Error(`Too many 503 errors.`);
     }
-    const nextWaitMs = waitMs > 0 ? waitMs * 2 : 100;
+    const nextWaitMs = waitMs > 0 ? waitMs * 2 : 250;
     return getMovieById(id, append, nextWaitMs);
   }
 
