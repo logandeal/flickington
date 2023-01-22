@@ -1,7 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-export function getTmdbUrl(path: string) {
-  return `https://api.themoviedb.org/3/${path}?api_key=${process.env.TMDB_API_KEY}&language=en-US`;
+export function getTmdbUrl(
+  path: string,
+  parameters: Record<string, string> = {}
+) {
+  return (
+    `https://api.themoviedb.org/3/${path}?api_key=${process.env.TMDB_API_KEY}&language=en-US` +
+    Object.keys(parameters).map((key) => `&${key}=${parameters[key]}`)
+  );
 }
 
 export default function makeTmdbApiHandler<T>(

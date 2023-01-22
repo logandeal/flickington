@@ -12,17 +12,19 @@ datasource db {
 }
 
 model movie {
-  id           Int       @id
-  title        String
-  release_date DateTime?
-  language     String
-  popularity   Float
-  vote_count   Int
-  vote_average Float
-  searches     movie_search[]
+  id            Int       @id
+  title         String
+  release_date  DateTime?
+  language      String
+  popularity    Float
+  vote_count    Int
+  vote_average  Float
+  certification String
+  searches      movie_search[]
   @@index([language])
-  @@index([release_date, language])
   @@index([popularity])
+  @@index([certification])
+  @@index([release_date, language, certification])
   @@index([vote_count, vote_average])
 }
 

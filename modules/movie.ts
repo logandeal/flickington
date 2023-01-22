@@ -29,6 +29,11 @@ export interface MovieStub {
   adult: boolean;
 }
 
+export interface ReleaseDate {
+  certification: string;
+  release_date: string;
+}
+
 export interface Movie extends MovieStub {
   title: string;
   overview: string;
@@ -41,6 +46,7 @@ export interface Movie extends MovieStub {
   popularity: number;
   vote_average: number;
   vote_count: number;
+  release_dates: ReleaseDate[];
 }
 
 export class MovieNotFoundError extends Error {
@@ -55,20 +61,82 @@ export class MovieNotFoundError extends Error {
   }
 }
 
-export async function getMovieById(id: number): Promise<Movie> {
-  const response = await fetch(getTmdbUrl(`movie/${id}`), {
-    cache: "no-store",
-  });
+interface Appender {
+  path: string;
+  transform?: (data: any) => any;
+}
+
+const appenders: Record<string, Appender> = {
+  providers: {
+    path: "watch/providers",
+    transform(data) {
+      const usProviders = data?.results?.US || {};
+      const providers = Object.keys(usProviders)
+        .map((typeKey) => {
+          const providersForType = usProviders[typeKey];
+          if (Array.isArray(providersForType)) {
+            return providersForType.map((provider) => ({
+              ...{
+                ...provider,
+                logo_path: `https://www.themoviedb.org/t/p/original${provider.logo_path}`,
+              },
+              type: typeKey,
+            }));
+          }
+          return [];
+        })
+        .flat();
+      return providers;
+    },
+  },
+  release_dates: {
+    path: "release_dates",
+    transform(data) {
+      return (data?.results || [])
+        .filter((country: any) => country.iso_3166_1 === "US")
+        .map((country: any) =>
+          country.release_dates.filter(
+            (release_date: any) => release_date.certification
+          )
+        )
+        .flat();
+    },
+  },
+};
+
+export async function getMovieById(
+  id: number,
+  append: string[] = []
+): Promise<Movie> {
+  const response = await fetch(
+    getTmdbUrl(`movie/${id}`, {
+      append_to_response: append.map((key) => appenders[key].path).join(","),
+    }),
+    {
+      cache: "no-store",
+    }
+  );
+
+  if (response.status === 404) {
+    throw new MovieNotFoundError(id);
+  }
 
   if (response.status !== 200) {
-    throw new MovieNotFoundError(id);
+    console.error(response);
+    throw new Error(`Problem attempting to load movie ${id}.`);
   }
 
   const data = await response.json();
 
-  return {
-    providers: [],
-    genres: [],
+  const appendPaths = append.map((key) => appenders[key].path);
+
+  const appendedData = appendPaths.reduce((result, path) => {
+    result[path] = data[path];
+    delete data[path];
+    return result;
+  }, {} as Record<string, any>);
+
+  const movie = {
     ...data,
     poster_path:
       data.poster_path &&
@@ -76,50 +144,21 @@ export async function getMovieById(id: number): Promise<Movie> {
     popularity: data.popularity || 0,
     vote_count: data.vote_count || 0,
     vote_average: data.vote_average || 0,
+    providers: data.providers || [],
+    genres: data.genres || [],
+    ...Object.fromEntries(
+      append.map((key) => {
+        const appender = appenders[key];
+        const appendedValue = appendedData[appender.path];
+        const transformedData = appender.transform
+          ? appender.transform(appendedValue)
+          : appendedValue;
+        return [key, transformedData];
+      })
+    ),
   };
-}
 
-async function getMovieProviders(id: number) {
-  const response = await fetch(getTmdbUrl(`movie/${id}/watch/providers`), {
-    cache: "no-store",
-  });
-
-  if (response.status !== 200) {
-    throw new MovieNotFoundError(id);
-  }
-
-  const data = await response.json();
-
-  return data;
-}
-
-export async function getMovieWithProvidersById(id: number): Promise<Movie> {
-  const [movie, providersByCountry] = await Promise.all([
-    getMovieById(id),
-    getMovieProviders(id),
-  ]);
-
-  const usProviders = providersByCountry?.results?.US || {};
-  const providers = Object.keys(usProviders)
-    .map((typeKey) => {
-      const providersForType = usProviders[typeKey];
-      if (Array.isArray(providersForType)) {
-        return providersForType.map((provider) => ({
-          ...{
-            ...provider,
-            logo_path: `https://www.themoviedb.org/t/p/original${provider.logo_path}`,
-          },
-          type: typeKey,
-        }));
-      }
-      return [];
-    })
-    .flat();
-
-  return {
-    ...movie,
-    providers,
-  };
+  return movie;
 }
 
 export async function getLatestMovie(): Promise<Movie> {

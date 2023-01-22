@@ -16,6 +16,16 @@ function parseNumberOption(value: string): number {
 program
   .option("-s, --start <number>", "Movie ID to start at", parseNumberOption)
   .option("-e, --end <number>", "Movie ID to end at", parseNumberOption)
+  .option(
+    "-n, --number <number>",
+    "Max number of movies to load",
+    parseNumberOption
+  )
+  .option(
+    "-t, --time <number>",
+    "Max time (in seconds) to load",
+    parseNumberOption
+  )
   .option("-d, --days <number>", "Days of changes", parseNumberOption)
   .option("--db", "Write results to database")
   .option(
@@ -32,7 +42,6 @@ import prisma from "../modules/prisma";
 import {
   getMaxDatabaseMovieId,
   getLatestMovie,
-  getMovieWithProvidersById,
   MovieNotFoundError,
   getNextDatabaseMovieId,
   doesDatabaseMovieExist,
@@ -41,6 +50,7 @@ import {
   Movie,
   isValidProvider,
   getGenrePairs,
+  getMovieById,
 } from "../modules/movie";
 import { getRandomIntSetInRange } from "../modules/random";
 
@@ -79,6 +89,10 @@ function getMovieData(movie: Movie) {
     )
     .flat();
 
+  const sortedReleaseDates = movie.release_dates
+    .slice(0)
+    .sort((a, b) => b.release_date.localeCompare(a.release_date));
+
   return {
     id: movie.id,
     title: movie.title || "",
@@ -90,6 +104,9 @@ function getMovieData(movie: Movie) {
     searches: {
       create: combos,
     },
+    certification: sortedReleaseDates[0]
+      ? sortedReleaseDates[0].certification
+      : "",
   };
 }
 
@@ -124,7 +141,10 @@ async function loadNewMovies() {
     for (const change of relevantChanges) {
       const beginTime = Date.now();
       try {
-        const movie = await getMovieWithProvidersById(change.id);
+        const movie = await getMovieById(change.id, [
+          "providers",
+          "release_dates",
+        ]);
         const data = getMovieData(movie);
         if (data) {
           try {
@@ -225,6 +245,7 @@ async function loadNewMovies() {
 
   let elapsedApiTime = 0;
   let elapsedDbTime = 0;
+  let startLoadTime = Date.now();
 
   let movieApiCount = 0;
 
@@ -232,10 +253,21 @@ async function loadNewMovies() {
     if (randomSet.size > 0 && !randomSet.has(movieId)) {
       continue;
     }
-    movieApiCount++;
+    if (
+      typeof program.opts().number === "number" &&
+      movieAddedCount >= program.opts().number
+    ) {
+      break;
+    }
     const beginTime = Date.now();
+    if (typeof program.opts().time === "number") {
+      if ((beginTime - startLoadTime) / 1000 > program.opts().time) {
+        break;
+      }
+    }
+    movieApiCount++;
     try {
-      const movie = await getMovieWithProvidersById(movieId);
+      const movie = await getMovieById(movieId, ["providers", "release_dates"]);
       const endApiTime = Date.now();
       elapsedApiTime = elapsedApiTime + (endApiTime - beginTime);
       const data = getMovieData(movie);
@@ -282,7 +314,8 @@ async function loadNewMovies() {
       },
     });
   }
-  console.info(`Loaded ${movieAddedCount} movies.`);
+  const elapsedSeconds = Math.round((Date.now() - startLoadTime) / 10) / 100;
+  console.info(`Loaded ${movieAddedCount} movies in ${elapsedSeconds}s.`);
   console.info(
     `Elapsed API time: ${Math.round(elapsedApiTime / 10) / 100}s (${
       Math.round(elapsedApiTime / movieApiCount / 10) / 100

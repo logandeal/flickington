@@ -7,10 +7,12 @@ CREATE TABLE `movie` (
     `popularity` DOUBLE NOT NULL,
     `vote_count` INTEGER NOT NULL,
     `vote_average` DOUBLE NOT NULL,
+    `certification` VARCHAR(191) NOT NULL,
 
     INDEX `movie_language_idx`(`language`),
-    INDEX `movie_release_date_language_idx`(`release_date`, `language`),
     INDEX `movie_popularity_idx`(`popularity`),
+    INDEX `movie_certification_idx`(`certification`),
+    INDEX `movie_release_date_language_certification_idx`(`release_date`, `language`, `certification`),
     INDEX `movie_vote_count_vote_average_idx`(`vote_count`, `vote_average`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

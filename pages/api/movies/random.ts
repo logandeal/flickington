@@ -8,12 +8,12 @@ import {
 import type { NextApiRequest, NextApiResponse } from "next";
 import {
   MovieNotFoundError,
-  getMovieWithProvidersById,
+  getMovieById,
   Movie,
   getLatestMovie,
 } from "../../../modules/movie";
 
-const MAX_ATTEMPT_COUNT = 25;
+const MAX_ATTEMPT_COUNT = 5;
 
 // array
 // pass array
@@ -28,7 +28,7 @@ async function getRandomMovie(
   const movieId = await getRandomMovieId(movieQueryOptions);
 
   try {
-    const movie = await getMovieWithProvidersById(movieId);
+    const movie = await getMovieById(movieId, ["providers", "release_dates"]);
 
     if (movie.adult !== false) {
       return getRandomMovie(movieQueryOptions, attemptCount + 1);
