@@ -2,6 +2,7 @@ import prisma from "../modules/prisma";
 
 import { getRandomInt } from "./random";
 import { getTmdbUrl } from "./tmdb";
+import { delay } from "./time";
 
 export interface MovieError {
   error: string;
@@ -109,6 +110,7 @@ export async function getMovieById(
   append: string[] = [],
   waitMs: number = 0
 ): Promise<Movie> {
+  await delay(waitMs);
   const response = await fetch(
     getTmdbUrl(`movie/${id}`, {
       append_to_response: append.map((key) => appenders[key].path).join(","),
@@ -123,11 +125,12 @@ export async function getMovieById(
   }
 
   if (response.status === 503) {
-    if (waitMs / 1000 / 60 >= 10) {
+    if (waitMs / 1000 / 60 >= 20) {
       console.error(response);
       throw new Error(`Too many 503 errors.`);
     }
     const nextWaitMs = waitMs > 0 ? waitMs * 2 : 250;
+
     return getMovieById(id, append, nextWaitMs);
   }
 

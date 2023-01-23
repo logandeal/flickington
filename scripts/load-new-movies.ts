@@ -55,7 +55,7 @@ import {
 import { getRandomIntSetInRange } from "../modules/random";
 import { delay } from "../modules/time";
 
-const MOVIE_REQUESTS_PER_SECOND = 10;
+const MOVIE_REQUESTS_PER_SECOND = 20;
 
 function getMovieData(movie: Movie) {
   if (movie.providers.length === 0 || movie.genres.length === 0) {
