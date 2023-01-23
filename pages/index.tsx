@@ -261,7 +261,7 @@ function Home() {
             genres: genres.map((genre) => getGenrePairString(genre)).join(","),
             release_date_gte: fromYear ? `${fromYear.get("year")}-01-01` : "",
             release_date_lte: toYear ? `${toYear.get("year")}-12-31` : "",
-            language_codes: "en",
+            languages: "en",
           })
       );
       const movie = await res.json();

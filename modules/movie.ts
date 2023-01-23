@@ -260,6 +260,16 @@ async function getMovieAtPosition(
           },
         },
         {
+          vote_average: {
+            gte: 4,
+          },
+        },
+        {
+          vote_count: {
+            gte: 10,
+          },
+        },
+        {
           searches: {
             some: {
               OR:
