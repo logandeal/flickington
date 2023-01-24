@@ -116,6 +116,12 @@ async function loadNewMovies() {
     return;
   }
 
+  let elapsedApiTime = 0;
+  let elapsedDbTime = 0;
+  let movieApiCount = 0;
+
+  let startChangesTime = Date.now();
+
   if (program.opts().days && maxMovieId && shouldWriteToDb) {
     const changes = await getMovieChanges(program.opts().days);
     const relevantChanges = changes.filter(
@@ -135,13 +141,17 @@ async function loadNewMovies() {
     console.info(`Checking for relevant changes...`);
     for (const change of relevantChanges) {
       const beginTime = Date.now();
+      movieApiCount++;
       try {
         const movie = await getMovieById(change.id, [
           "providers",
           "release_dates",
         ]);
+        const endApiTime = Date.now();
+        elapsedApiTime = elapsedApiTime + (endApiTime - beginTime);
         const data = getMovieData(movie);
         if (data) {
+          const beginDbTime = Date.now();
           try {
             await prisma.movie.update({
               where: {
@@ -155,6 +165,8 @@ async function loadNewMovies() {
               data,
             });
           }
+          const endDbTime = Date.now();
+          elapsedDbTime = elapsedDbTime + (endDbTime - beginDbTime);
           console.info(`Updated ${movie.id}: ${movie.title}`);
           movieChangedCount++;
         }
@@ -177,7 +189,9 @@ async function loadNewMovies() {
         completed_count: movieChangedCount,
       },
     });
-    console.info(`Updated ${movieChangedCount} movies.`);
+    const elapsedSeconds =
+      Math.round((Date.now() - startChangesTime) / 10) / 100;
+    console.info(`Updated ${movieChangedCount} movies in ${elapsedSeconds}s.`);
   }
 
   if (program.opts().start && shouldWriteToDb) {
@@ -238,11 +252,7 @@ async function loadNewMovies() {
     console.info(`Sampling ${randomSet.size} IDs in that range.`);
   }
 
-  let elapsedApiTime = 0;
-  let elapsedDbTime = 0;
   let startLoadTime = Date.now();
-
-  let movieApiCount = 0;
 
   for (let movieId = startMovieId; movieId <= endMovieId; movieId++) {
     if (randomSet.size > 0 && !randomSet.has(movieId)) {
