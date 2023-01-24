@@ -21,6 +21,7 @@ export interface MovieProvider {
   provider_name: string;
   display_priority: number;
   type: string;
+  is_valid: boolean;
 }
 
 export interface MovieStub {
@@ -82,6 +83,7 @@ const appenders: Record<string, Appender> = {
                 logo_path: `https://www.themoviedb.org/t/p/original${provider.logo_path}`,
               },
               type: typeKey,
+              is_valid: isValidProviderType(typeKey),
             }));
           }
           return [];

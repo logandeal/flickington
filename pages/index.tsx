@@ -57,9 +57,9 @@ export default function App() {
 }
 
 function sortProviders(providers: MovieProvider[]) {
-  return [...providers].sort((a, b) =>
-    a.provider_name.localeCompare(b.provider_name)
-  );
+  return [...providers]
+    .filter((provider) => provider.is_valid)
+    .sort((a, b) => a.provider_name.localeCompare(b.provider_name));
 }
 
 function ProviderPicker({
