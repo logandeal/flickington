@@ -225,6 +225,14 @@ async function loadNewMovies() {
     ? Math.min(program.opts().end, latestMovie.id, nextDatabaseMovieId - 1)
     : Math.min(latestMovie.id, nextDatabaseMovieId - 1);
   let movieAddedCount = 0;
+  if (isNaN(startMovieId) || isNaN(endMovieId)) {
+    console.error(`start: ${program.opts().start}`);
+    console.error(`maxMovieId: ${maxMovieId}`);
+    console.error(`end: ${program.opts().end}`);
+    console.error(`latestMovie.id: ${latestMovie.id}`);
+    console.error(`nextDatabaseMovieId: ${nextDatabaseMovieId}`);
+    return;
+  }
   const movieLoad = shouldWriteToDb
     ? await prisma.movie_load.create({
         data: {
