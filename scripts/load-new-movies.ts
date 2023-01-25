@@ -231,7 +231,7 @@ async function loadNewMovies() {
     console.error(`end: ${program.opts().end}`);
     console.error(`latestMovie.id: ${latestMovie.id}`);
     console.error(`nextDatabaseMovieId: ${nextDatabaseMovieId}`);
-    return;
+    throw new Error("Problem getting start or end movie IDs:");
   }
   const movieLoad = shouldWriteToDb
     ? await prisma.movie_load.create({
