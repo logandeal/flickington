@@ -8,7 +8,7 @@ on:
         default: "0"
         required: true
   schedule:
-    - cron: "50 19 * * *"
+    - cron: "0 11 * * *"
 
 jobs:
   load:
