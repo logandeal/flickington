@@ -226,6 +226,7 @@ async function loadNewMovies() {
     : Math.min(latestMovie.id, nextDatabaseMovieId - 1);
   let movieAddedCount = 0;
   if (isNaN(startMovieId) || isNaN(endMovieId)) {
+    console.error(JSON.stringify(latestMovie));
     console.error(`start: ${program.opts().start}`);
     console.error(`maxMovieId: ${maxMovieId}`);
     console.error(`end: ${program.opts().end}`);
