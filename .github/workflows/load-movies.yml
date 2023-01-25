@@ -20,4 +20,7 @@ jobs:
         node-version: 16
         cache: 'npm'
     - run: npm ci
-    - run: npx ts-node scripts/load-new-movies.ts --db
+    - env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        TMBD_API_KEY: ${{ secrets.TMBD_API_KEY }}
+      run: npx ts-node scripts/load-new-movies.ts --db
