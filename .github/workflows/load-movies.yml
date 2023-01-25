@@ -14,5 +14,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Send greeting
-      run: echo "Loading ${{ github.event.inputs.days }} days of changes."
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16
+        cache: 'npm'
+    - run: npm ci
+    - run: npx ts-node scripts/load-new-movies.ts --db
