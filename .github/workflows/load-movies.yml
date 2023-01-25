@@ -8,7 +8,7 @@ on:
         default: "0"
         required: true
   schedule:
-    - cron: "30 19 * * *"
+    - cron: "50 19 * * *"
 
 jobs:
   load:
@@ -24,4 +24,4 @@ jobs:
       - env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
-        run: npx ts-node scripts/load-new-movies.ts --db --days ${{ github.event.inputs.days || "2" }}
+        run: npx ts-node scripts/load-new-movies.ts --db --days ${{ github.event.inputs.days || '2' }}
