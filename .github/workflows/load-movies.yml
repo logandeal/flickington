@@ -2,12 +2,13 @@ name: Load Movies
 
 on:
   workflow_dispatch:
-    # Inputs the workflow accepts.
     inputs:
       days:
         description: "Days of changes"
-        default: "2"
+        default: "0"
         required: true
+  schedule:
+    - cron: "0 2 * * *"
 
 jobs:
   load:
@@ -23,4 +24,4 @@ jobs:
       - env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
-        run: npx ts-node scripts/load-new-movies.ts --db
+        run: npx ts-node scripts/load-new-movies.ts --db --days ${{ github.event.inputs.days || "2" }}
