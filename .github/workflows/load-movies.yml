@@ -5,7 +5,7 @@ on:
     # Inputs the workflow accepts.
     inputs:
       days:
-        description: 'Days of changes'
+        description: "Days of changes"
         default: "2"
         required: true
 
@@ -14,13 +14,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 18
-        cache: 'npm'
-    - run: npm ci
-    - env:
-        DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        TMBD_API_KEY: ${{ secrets.TMBD_API_KEY }}
-      run: npx ts-node scripts/load-new-movies.ts --db
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: "npm"
+      - run: npm ci
+      - env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        run: npx ts-node scripts/load-new-movies.ts --db
