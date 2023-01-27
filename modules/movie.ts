@@ -245,6 +245,8 @@ async function getMovieAtPosition(
     minRating = 0,
   }: MovieQueryOptions = {}
 ): Promise<Movie> {
+  const adjustedVoteCount = minRating > 0 ? ((minRating + 1) / 2) * 3 : 0;
+  console.log(adjustedVoteCount);
   const movie = await prisma.movie.findMany({
     take: 10,
     where: {
@@ -270,7 +272,7 @@ async function getMovieAtPosition(
         },
         {
           vote_count: {
-            gte: 10,
+            gte: adjustedVoteCount,
           },
         },
         {
