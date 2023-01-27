@@ -189,6 +189,7 @@ export interface MovieQueryOptions {
   languageCodes?: string[];
   releaseDateLte?: Date;
   releaseDateGte?: Date;
+  minRating?: number;
 }
 
 export async function getMaxDatabaseMovieId(): Promise<number> {
@@ -241,6 +242,7 @@ async function getMovieAtPosition(
     languageCodes = [],
     releaseDateLte = undefined,
     releaseDateGte = undefined,
+    minRating = 0,
   }: MovieQueryOptions = {}
 ): Promise<Movie> {
   const movie = await prisma.movie.findMany({
@@ -263,7 +265,7 @@ async function getMovieAtPosition(
         },
         {
           vote_average: {
-            gte: 4,
+            gte: minRating,
           },
         },
         {

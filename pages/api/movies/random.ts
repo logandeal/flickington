@@ -88,6 +88,11 @@ export default async function handler(
   const releaseDateGte = releaseDateGteString
     ? new Date(releaseDateGteString)
     : undefined;
+  const minRatingString = arrayify(req.query.min_rating)[0];
+  const minRating =
+    minRatingString && !isNaN(Number(minRatingString))
+      ? Number(minRatingString)
+      : 0;
   try {
     const movie = await getRandomMovie({
       providerIds,
@@ -95,6 +100,7 @@ export default async function handler(
       languageCodes,
       releaseDateGte: releaseDateGte,
       releaseDateLte: releaseDateLte,
+      minRating,
     });
     res.status(200).json(movie);
   } catch (e) {

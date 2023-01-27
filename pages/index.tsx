@@ -30,6 +30,7 @@ import {
   Chip,
   MenuItem,
   IconButton,
+  Rating,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -248,9 +249,11 @@ function Home() {
   const [toYear, setToYear] = useState<Dayjs | null>(
     dayjs(String(new Date().getFullYear()))
   );
+  const [minRating, setMinRating] = useState<number>(2);
 
   async function loadRandomMovie() {
     setCurrentMovieState((state) => ({ ...state, status: "loading" }));
+    const adjustedMinRating = minRating > 0 ? minRating * 2 - 1 : 0;
     try {
       const res = await fetch(
         "/api/movies/random?" +
@@ -262,6 +265,7 @@ function Home() {
             release_date_gte: fromYear ? `${fromYear.get("year")}-01-01` : "",
             release_date_lte: toYear ? `${toYear.get("year")}-12-31` : "",
             languages: "en",
+            min_rating: `${adjustedMinRating}`,
           })
       );
       const movie = await res.json();
@@ -426,6 +430,16 @@ function Home() {
                       </Grid>
                     </LocalizationProvider>
                   </Grid>
+                  <Box sx={{ textAlign: "center" }}>
+                    <Typography component="legend">Minimum Rating</Typography>
+                    <Rating
+                      name="rating"
+                      value={minRating}
+                      onChange={(event, newValue) => {
+                        setMinRating(newValue || 0);
+                      }}
+                    />
+                  </Box>
                 </Stack>
               </div>
               <div
