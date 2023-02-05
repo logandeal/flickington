@@ -126,10 +126,10 @@ export async function getMovieById(
     throw new MovieNotFoundError(id);
   }
 
-  if (response.status === 503) {
+  if (response.status >= 500) {
     if (waitMs / 1000 / 60 >= 20) {
       console.error(response);
-      throw new Error(`Too many 503 errors.`);
+      throw new Error(`Too many 5xx errors.`);
     }
     const nextWaitMs = waitMs > 0 ? waitMs * 2 : 250;
 
