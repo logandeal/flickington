@@ -141,8 +141,9 @@ async function loadNewMovies() {
     });
     console.info(`Checking for relevant changes...`);
     let shouldSkip = program.opts().updateStart ? true : false;
-
+    let changeIndex = 0;
     for (const change of relevantChanges) {
+      changeIndex++;
       if (shouldSkip && change.id === program.opts().updateStart) {
         shouldSkip = false;
       }
@@ -176,7 +177,9 @@ async function loadNewMovies() {
           }
           const endDbTime = Date.now();
           elapsedDbTime = elapsedDbTime + (endDbTime - beginDbTime);
-          console.info(`Updated ${movie.id}: ${movie.title}`);
+          console.info(
+            `Updated ${movie.id} (${changeIndex} of ${relevantChanges.length}): ${movie.title}`
+          );
           movieChangedCount++;
         }
       } catch (e) {
