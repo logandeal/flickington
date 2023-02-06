@@ -27,6 +27,7 @@ program
     parseNumberOption
   )
   .option("-d, --days <number>", "Days of changes", parseNumberOption)
+  .option("--update-start <number>", "Update at ID", parseNumberOption)
   .option("--db", "Write results to database")
   .option(
     "-r, --random <number>",
@@ -139,7 +140,15 @@ async function loadNewMovies() {
       },
     });
     console.info(`Checking for relevant changes...`);
+    let shouldSkip = program.opts().updateStart ? true : false;
+
     for (const change of relevantChanges) {
+      if (shouldSkip && change.id === program.opts().updateStart) {
+        shouldSkip = false;
+      }
+      if (shouldSkip) {
+        continue;
+      }
       const beginTime = Date.now();
       movieApiCount++;
       try {

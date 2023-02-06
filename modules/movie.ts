@@ -122,11 +122,13 @@ export async function getMovieById(
     }
   );
 
-  if (response.status === 404) {
+  // Some movie IDs cause 500 errors, so treat those as not found.
+  if (response.status === 404 || response.status === 500) {
     throw new MovieNotFoundError(id);
   }
 
   if (response.status >= 500) {
+    console.error(`Problem getting movie ${id}: ${response.statusText}`);
     if (waitMs / 1000 / 60 >= 20) {
       console.error(response);
       throw new Error(`Too many 5xx errors.`);
@@ -138,7 +140,7 @@ export async function getMovieById(
 
   if (response.status !== 200) {
     console.error(response);
-    throw new Error(`Problem attempting to load movie ${id}.`);
+    throw new Error(`Problem getting movie ${id}.`);
   }
 
   const data = await response.json();
